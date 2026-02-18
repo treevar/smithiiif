@@ -1,0 +1,88 @@
+name: Deploy Voyager to Pages
+
+on:
+  push:
+    branches:
+      - "**"
+      - "!gh-pages"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # CRITICAL: This pulls in manifesto-3d and others
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Production
+        # Voyager typically uses 'build-prod' for the full minified suite
+        run: npm run build-prod 
+
+      - name: Upload dist as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to gh-pages
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "Publishing $BRANCH_NAME to gh-pages branch"
+          
+          # 1. Initialize a clean temporary directory
+          git clone --depth 1 --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git out-dir || \
+          (mkdir out-dir && cd out-dir && git init && git checkout -b gh-pages)
+          
+          # 2. Sync files
+          cd out-dir
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure the subdirectory for this branch exists
+          rm -rf "$BRANCH_NAME"
+          mkdir -p "$BRANCH_NAME"
+          cp -rv ../dist/* "$BRANCH_NAME/"
+          
+          # 3. Commit and Push
+          git add .
+          if ! git diff --staged --quiet; then
+            git commit -m "Deploy $BRANCH_NAME [ci skip]"
+            # Use the token to ensure push permissions
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages
+          else
+            echo "No changes to commit."
+          fi

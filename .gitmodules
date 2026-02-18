@@ -2,3 +2,6 @@
 	path = docs/public
 	url = https://github.com/Smithsonian/dpo-voyager
 	branch = gh-pages
+[submodule "libs/manifesto-3d"]
+	path = libs/manifesto-3d
+	url = https://github.com/treevar/manifesto-3d.git

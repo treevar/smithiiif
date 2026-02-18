@@ -81,9 +81,12 @@ const apps = {
 
 let version;
 try{
-    version = childProcess.execSync("git describe --tags").toString().trim();
+    version = childProcess.execSync(
+        "git describe --tags --always --dirty",
+        { stdio: ['ignore','pipe','ignore'] }
+    ).toString().trim();
+    if(!version) throw new Error();
 }catch(e){
-    //Fallback if git is not present or tags have not been fetched
     version = require(path.resolve(project, "./package.json")).version;
 }
 
