@@ -27,8 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Production
-        # Voyager typically uses 'build-prod' for the full minified suite
+      - name: Build Dev
         run: npm run build-dev-local
 
       - name: Upload dist as artifact
