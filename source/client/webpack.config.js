@@ -114,6 +114,7 @@ module.exports = function(env, argv)
     }),{});
 
     const plugins =build_apps.map((app) =>{
+        const attr = app.name == "voyager-story" ? 'mode="standalone" uiMode="view" dragdrop' : 'dragdrop';
         return new HTMLWebpackPlugin({
             filename: isDevMode ? `${app.name}-dev${localTag}.html` : `${app.name}${localTag}.html`,
             template: app.template,
@@ -122,7 +123,7 @@ module.exports = function(env, argv)
             isDevelopment: isDevMode,
             isOffline: isOffline,
             analyticsId: analyticsId,
-            element: `<${app.name}></${app.name}>`,
+            element: `<${app.name} ${attr}></${app.name}>`,
             chunks: [ app.name ],
         })
     });
