@@ -25,6 +25,7 @@ import CVToursTask from "../components/CVToursTask";
 import CVOverlayTask from "../components/CVOverlayTask";
 import CVAudioTask from "../components/CVAudioTask";
 import CVActionsTask from "client/components/CVActionsTask";
+import CVTestTask from "../components/CVTestTask";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -76,9 +77,10 @@ export default {
         CVAnnotationsTask,
         CVArticlesTask,
         CVToursTask,
-        //CVOverlayTask,
+        CVOverlayTask,
         CVAudioTask,
         CVActionsTask,
         CVSettingsTask,
+        CVTestTask,
     ]
 }
