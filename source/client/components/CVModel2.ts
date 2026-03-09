@@ -112,6 +112,7 @@ export default class CVModel2 extends CObject3D
         occlusion: types.Percent("Material.Occlusion", { preset: 0.25, max: 2.0}),
         doubleSided: types.Boolean("Material.DoubleSided", false),
         dumpDerivatives: types.Event("Derivatives.Dump"),
+        label: types.String("Model.Label")
     };
 
     protected static readonly outs = {
@@ -149,6 +150,12 @@ export default class CVModel2 extends CObject3D
         ];
     }
 
+    get manifestsProperties() {
+        return [
+            this.ins.label
+        ]
+    }
+
     private _derivatives = new DerivativeList();
     private _activeDerivative: Derivative = null;
 
@@ -173,6 +180,7 @@ export default class CVModel2 extends CObject3D
     constructor(node: Node, id: string)
     {
         super(node, id);
+        this.tags.add("iiif");
 
         this.object3D = new Group();
         this.object3D.name = "Model";
@@ -252,7 +260,9 @@ export default class CVModel2 extends CObject3D
 
     create()
     {
+        this.tags.add("iiif");
         super.create();
+        
 
         // link units with annotation view
         const av = this.node.createComponent(CVAnnotationView);
