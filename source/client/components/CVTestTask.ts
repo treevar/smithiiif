@@ -28,25 +28,21 @@ export default class CVTestTask extends CVTask
 {
     static readonly typeName: string = "CVTestTask";
 
-    static readonly text: string = "Test";
+    static readonly text: string = "IIIF";
     static readonly icon: string = "hierarchy";
 
 
     constructor(node: Node, id: string)
     {
         super(node, id);
+
+        const configuration = this.configuration;
+        configuration.interfaceVisible = true;
+        configuration.bracketsVisible = true;
     }
 
     createView()
     {
         return new TestTaskView(this);
-    }
-    activateTask(): void {
-        this.startObserving();
-        super.activateTask()
-    }
-    deactivateTask(): void {
-        this.stopObserving();
-        super.deactivateTask();
     }
 }

@@ -150,7 +150,7 @@ export default class CVModel2 extends CObject3D
         ];
     }
 
-    get manifestsProperties() {
+    get manifestProperties() {
         return [
             this.ins.label
         ]
