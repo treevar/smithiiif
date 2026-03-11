@@ -68,7 +68,7 @@ export default class TestTaskView extends TaskView<CVTestTask>
         let node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree, but only if it has a component with the iiif tag
         //Not a IIIF node
         if(!node) {
-            return 
+            return defMsg;
         }
         
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
