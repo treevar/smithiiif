@@ -55,6 +55,8 @@ export default class TestTaskView extends TaskView<CVTestTask>
     }*/
     protected render()
     {
+        const languageManager = this.activeDocument.setup.language;
+        const langSwitch = `<sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>`;
         const defMsg = html`<div class="sv-placeholder">Please select a node with the "iiif" tag to display its properties.</div>`;
         if(!this.activeDocument) {
             return;
@@ -63,8 +65,8 @@ export default class TestTaskView extends TaskView<CVTestTask>
             return defMsg;
         }
         //Get only nodes with iiif tag
-        let nodes = this.activeNode.components.getArray().filter((component) => component.tags.has("iiif"));
-        console.log(`Nodes size: ${nodes.length}`);
+        let nodes = this.activeNode.components.getArray().filter((component) => component["manifestProperties"]);
+        //console.log(`Nodes size: ${nodes.length}`);
         let node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree, but only if it has a component with the iiif tag
         //Not a IIIF node
         if(!node) {
