@@ -16,7 +16,7 @@ export class MultilangProp{
         this.#key = key;
         this.#values = {};
     }
-    //Get value for a specific language, default to English if not found
+    //Get value for a specific language, default to English
     get(lang: string = "en"): string {
         return this.#values[lang][0];
     }
@@ -32,7 +32,7 @@ export class MultilangProp{
     }
     //Convert to a json string that can be directly added to a iiif manifest
     //JSON Object containg a key for each langauge specified, with the value being a strign array
-    //defIfEmpty (Default if empty): if true and we have no values then the none key is added with the defaultText
+    //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
     iiifJSONString(defIfEmpty: boolean = true): string {
         const keys = this.langs;
@@ -54,9 +54,9 @@ export class ManifestProps{
     static readonly defaultKeys = ["label", "summary", "rights", "requiredStatement"];
     #base: Dictionary<MultilangProp> = {};
     #extra: Dictionary<MultilangProp> = {};
-    #parent: Component | null;
-    constructor(parent: Component | null){
-        this.#parent = parent; 
+    //#parent: Component | null;
+    constructor(/*parent: Component | null*/){
+        //this.#parent = parent; 
         //Add base properties
         ManifestProps.defaultKeys.forEach((key) => {
             this.#base[key] = new MultilangProp(key);
