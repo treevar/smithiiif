@@ -18,15 +18,13 @@
 import { Node } from "@ff/graph/Component";
 
 import CVTask from "./CVTask";
-import TestTaskView from "../ui/story/TestTaskView";
+import ManifestTaskView from "../ui/story/ManifestTaskView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//export enum EDerivativesTaskMode { Off }
-
-export default class CVTestTask extends CVTask
+export default class CVManifestTask extends CVTask
 {
-    static readonly typeName: string = "CVTestTask";
+    static readonly typeName: string = "CVManifestTask";
 
     static readonly text: string = "IIIF";
     static readonly icon: string = "hierarchy";
@@ -43,6 +41,6 @@ export default class CVTestTask extends CVTask
 
     createView()
     {
-        return new TestTaskView(this);
+        return new ManifestTaskView(this);
     }
 }

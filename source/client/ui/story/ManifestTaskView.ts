@@ -18,7 +18,7 @@
 //http://localhost:3000/voyager-story-dev?model=https://raw.githubusercontent.com/IIIF/3d/main/assets/astronaut/astronaut.glb
 
 
-import CVTestTask from "../../components/CVTestTask";
+import CVManifestTask from "../../components/CVManifestTask";
 import Node from "@ff/graph/Node";
 import Component from "@ff/graph/Component";
 import Property from "@ff/graph/Property";
@@ -41,8 +41,8 @@ interface ITreeNode
     property?: Property;
 }
 
-@customElement("sv-test-task-view")
-export default class TestTaskView extends TaskView<CVTestTask>
+@customElement("sv-manifest-task-view")
+export default class ManifestTaskView extends TaskView<CVManifestTask>
 {
     /*protected connected()
     {
