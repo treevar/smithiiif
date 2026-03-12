@@ -26,7 +26,7 @@ export default class CVManifestTask extends CVTask
 {
     static readonly typeName: string = "CVManifestTask";
 
-    static readonly text: string = "IIIF";
+    static readonly text: string = "Manifest";
     static readonly icon: string = "iiif";
 
 
