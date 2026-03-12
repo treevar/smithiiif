@@ -1,10 +1,10 @@
 import { Dictionary } from "@ff/core/types";
-import Component from "@ff/graph/Component";
-import Node from "@ff/graph/Node";
+//import Component from "@ff/graph/Component";
 
 //Multilang property class, contains a key and a dictionary of language to value, with getter and setter for specific language
 //Only supports 1 value per language for now, but the iiif spec allows for multiple values for each lang
 //May not need to support multiple values for our use case, but something to keep in mind
+//  Figuring out how to implement with UI will be hardest part 
 export class MultilangProp{
     static readonly typeName: string = "MultilangProp";
     //Default text used if iiifJSONString is called and there are no values
