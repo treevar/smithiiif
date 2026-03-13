@@ -30,25 +30,23 @@ export class MultilangProp{
         this.#values = {};
     }
     //Get value for a specific language, default to English
-    get(lang: TLanguageType = "EN"): string {
-        const langStr = lang.toString();
-        if(!this.#values[langStr] || !this.#values[langStr][0]){
+    get(lang: TLanguageType): string {
+        if(!this.#values[lang] || !this.#values[lang][0]){
             return "";
         }
-        return this.#values[langStr][0];
+        return this.#values[lang][0];
     }
     set(lang: TLanguageType, value: string) {
-        const langStr = lang.toString();
         //Lang array doesnt exist
-        if(!this.#values[langStr]) {
-            this.#values[langStr] = [];
+        if(!this.#values[lang]) {
+            this.#values[lang] = [];
         }
         //First elem doesnt exist
-        if(!this.#values[langStr][0]){
-            this.#values[langStr].push(value);
+        if(!this.#values[lang][0]){
+            this.#values[lang].push(value);
         }
         else{
-            this.#values[langStr][0] = value;
+            this.#values[lang][0] = value;
         }
     }
 
@@ -103,7 +101,7 @@ export class ManifestProps{
         return null;
     }
     //Set property value for a specific language, if property doesn't exist create it in extra
-    set(key: string, value: string, lang: TLanguageType = "EN"){
+    set(key: string, value: string, lang: TLanguageType){
         
         if(this.#extra[key]){
             this.#extra[key].set(lang, value);
@@ -164,24 +162,26 @@ export class ManifestProps{
     }
 
     fillPropertyValues = () => {
-        const lang = this.langManager ? this.langManager.codeString() : "EN";
-        if(!this.properties){
-            console.log("Properties null");
-            return;
+    const lang = this.langManager?.codeString() ?? "EN";
+    
+    Object.entries(this.properties).forEach(([key, prop]) => {
+        if(prop) {
+            const val = this.get(key)?.get(lang);
+            
+            prop.setValue(val);
+            
         }
-        Object.entries(this.properties).forEach(([key, prop]) => {
-            if(prop) {
-                prop.setValue(this.get(key)?.get(lang) || "");
-            }
-        });
-    }
+    });
+}
 
     #addNewKey(key: string, base: boolean = false): MultilangProp {
-        const prop = new MultilangProp(key);
+        let prop = new MultilangProp(key);
         if(base) {
             this.#base[key] = prop;
+            prop = this.#base[key];
         } else {
             this.#extra[key] = prop;
+            prop = this.#extra[key];
         }
         this.#addProperty(key);
         return prop;
@@ -196,10 +196,15 @@ export class ManifestProps{
     }
 
     #onPropertyChanged(key: string, value: string){
-        const prop = this.get(key);
-        const lang = this.#langManager ? this.#langManager.codeString() : "EN";
-        if(prop) {
-            prop.set(lang, value);
-        }
+    // Only save if the value is actually new or different
+    const currentProp = this.get(key);
+    const lang = this.#langManager?.codeString() ?? "EN";
+    
+    // Check if the current value in the data matches the new value
+    // This prevents "sync-triggered" updates from overwriting your work
+    if (currentProp?.get(lang) !== value) {
+        console.log("Action: Save", { key, lang, value });
+        currentProp?.set(lang, value);
     }
+}
 };
