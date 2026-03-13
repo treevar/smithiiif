@@ -15,18 +15,36 @@
  * limitations under the License.
  */
 
-import { customElement, html } from "@ff/ui/CustomElement";
+//http://localhost:3000/voyager-story-dev?model=https://raw.githubusercontent.com/IIIF/3d/main/assets/astronaut/astronaut.glb
 
-import { TaskView } from "../../components/CVTask";
 
 import CVTestTask from "../../components/CVTestTask";
+import Node from "@ff/graph/Node";
+import Component from "@ff/graph/Component";
+import Property from "@ff/graph/Property";
 
+import "@ff/scene/ui/PropertyView";
+
+import { customElement, property, html } from "@ff/ui/CustomElement";
+import Tree from "@ff/ui/Tree";
+
+import { TaskView } from "../../components/CVTask";
+import NVNode from "../../nodes/NVNode";
 ////////////////////////////////////////////////////////////////////////////////
+
+interface ITreeNode
+{
+    id: string;
+    children: ITreeNode[];
+    text: string;
+    classes: string;
+    property?: Property;
+}
 
 @customElement("sv-test-task-view")
 export default class TestTaskView extends TaskView<CVTestTask>
 {
-     protected connected()
+    /*protected connected()
     {
         super.connected();
     }
@@ -34,12 +52,133 @@ export default class TestTaskView extends TaskView<CVTestTask>
     protected disconnected()
     {
         super.disconnected();
-    }
+    }*/
     protected render()
     {
+        const defMsg = html`<div class="sv-placeholder">Please select a node with the "iiif" tag to display its properties.</div>`;
         if(!this.activeDocument) {
             return;
         }
-        return html`<div class="sv-placeholder">Test Task View</div>`;
+        if(!this.activeNode) {
+            return defMsg;
+        }
+        //Get only nodes with iiif tag
+        let nodes = this.activeNode.components.getArray().filter((component) => component.tags.has("iiif"));
+        console.log(`Nodes size: ${nodes.length}`);
+        let node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree, but only if it has a component with the iiif tag
+        //Not a IIIF node
+        if(!node) {
+            return defMsg;
+        }
+        
+        return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <sv-manifest-tree .node=${node}></sv-manifest-tree>
+        </div>`;
+    }
+    protected onActiveNode(previous: NVNode, next: NVNode)
+    {
+        this.requestUpdate();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+interface ITreeNode
+{
+    id: string;
+    children: ITreeNode[];
+    text: string;
+    classes: string;
+    property?: Property;
+}
+
+@customElement("sv-manifest-tree")
+export class ManifestTree extends Tree<ITreeNode>
+{
+    @property({ attribute: false })
+    node: NVNode = null;
+
+    protected firstConnected()
+    {
+        super.firstConnected();
+        this.classList.add("ff-property-tree", "sv-manifest-tree");
+    }
+
+    protected getClasses(treeNode: ITreeNode)
+    {
+        return treeNode.classes;
+    }
+
+    protected update(changedProperties: Map<PropertyKey, unknown>)
+    {
+        if (changedProperties.has("node")) {
+            this.root = this.createNodeTreeNode(this.node);
+        }
+
+        super.update(changedProperties);
+    }
+
+    protected renderNodeHeader(node: ITreeNode)
+    {
+        if (!node.property) {
+            return html`<div class="ff-text ff-label ff-ellipsis">${node.text}</div>`;
+        }
+
+        return html`<sv-property-view .property=${node.property}></sv-property-view>`;
+
+    }
+
+    protected createNodeTreeNode(node: Node): ITreeNode
+    {
+        const components = node.components.getArray().filter(component => component["manifestProperties"]);
+
+        return {
+            id: node.id,
+            text: node.displayName,
+            classes: "ff-node",
+            children: components.map(component => ({
+                id: component.id,
+                text: component.displayName,
+                classes: "ff-component",
+                property: null,
+                children: this.createPropertyNodes(component["manifestProperties"]),
+            })),
+        };
+    }
+
+    protected createPropertyNodes(properties: Property[]): ITreeNode[]
+    {
+        const root: Partial<ITreeNode> = {
+            children: []
+        };
+
+        properties.forEach(property => {
+            const fragments = property.path.split(".");
+            let node = root;
+
+            const count = fragments.length;
+            const last = count - 1;
+
+            for (let i = 0; i < count; ++i) {
+                const fragment = fragments[i];
+                let child = node.children.find(node => node.text === fragment);
+
+                if (!child) {
+                    const id = i === last ? property.key : fragment;
+
+                    child = {
+                        id,
+                        text: fragment,
+                        classes: "",
+                        children: [],
+                        property: i === last ? property : null
+                    };
+                    node.children.push(child);
+                }
+                node = child;
+            }
+        });
+
+        return root.children;
     }
 }
