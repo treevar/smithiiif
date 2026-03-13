@@ -41,6 +41,7 @@ import CVEnvironment from "./CVEnvironment";
 import CVSetup from "./CVSetup";
 import { Dictionary } from "client/../../libs/ff-core/source/types";
 import Asset from "client/models/Asset";
+import { ManifestProps, IManifestProvider } from "client/utils/ManifestProps";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +77,7 @@ export interface IOverlay
  * ### Events
  * - *"bounding-box"* - emitted after the model's bounding box changed
  */
-export default class CVModel2 extends CObject3D
+export default class CVModel2 extends CObject3D implements IManifestProvider
 {
     static readonly typeName: string = "CVModel2";
 
@@ -112,7 +113,6 @@ export default class CVModel2 extends CObject3D
         occlusion: types.Percent("Material.Occlusion", { preset: 0.25, max: 2.0}),
         doubleSided: types.Boolean("Material.DoubleSided", false),
         dumpDerivatives: types.Event("Derivatives.Dump"),
-        label: types.String("Model.Label")
     };
 
     protected static readonly outs = {
@@ -150,11 +150,7 @@ export default class CVModel2 extends CObject3D
         ];
     }
 
-    get manifestProperties() {
-        return [
-            this.ins.label
-        ]
-    }
+    readonly manifestProps = new ManifestProps();
 
     private _derivatives = new DerivativeList();
     private _activeDerivative: Derivative = null;

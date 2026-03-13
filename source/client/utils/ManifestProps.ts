@@ -1,5 +1,16 @@
 import { Dictionary } from "@ff/core/types";
+import Component from "@ff/graph/Component";
+import Property, { schemas } from "@ff/graph/Property";
 //import Component from "@ff/graph/Component";
+
+//Inerface that has to be implemented by any component that wants to have manifest properties, this is used to check if a node has manifest properties
+export interface IManifestProvider{
+    readonly manifestProps: ManifestProps;
+}
+
+export function isManifestProvider(obj: any): obj is Component & IManifestProvider {
+    return obj && obj.manifestProps instanceof ManifestProps;
+}
 
 //Multilang property class, contains a key and a dictionary of language to value, with getter and setter for specific language
 //Only supports 1 value per language for now, but the iiif spec allows for multiple values for each lang
@@ -46,20 +57,20 @@ export class MultilangProp{
 };
 
 //Contains all manifest proprties with multilanguage support
-//Optionally takes a reference to the parent object for retrieving id, and parent level data for the manifest properties
-//  ^^^ Not currently implemented
 export class ManifestProps{
     static readonly typeName: string = "ManifestProps";
     //Default keys added to every manifest object
     static readonly defaultKeys = ["label", "summary", "rights", "requiredStatement"];
     #base: Dictionary<MultilangProp> = {};
     #extra: Dictionary<MultilangProp> = {};
+
+    #properties: Dictionary<Property> = {}; //Used for interfacing with UI
     //#parent: Component | null;
-    constructor(/*parent: Component | null*/){
-        //this.#parent = parent; 
+    constructor(){
         //Add base properties
+        const addToBase: boolean = true;
         ManifestProps.defaultKeys.forEach((key) => {
-            this.#base[key] = new MultilangProp(key);
+            this.#addNewKey(key, addToBase);
         });
     }
     //Get a property by key, check extra first then base, return null if not found
@@ -81,16 +92,17 @@ export class ManifestProps{
             this.#base[key].set(lang, value);
         }
         else {
-            const prop = new MultilangProp(key);
+            const prop = this.add(key);
             prop.set(lang, value);
-            this.#extra[key] = prop;
         }
     }
     //Adds property to extra if it doesnt exist
-    add(key: string){
-        if(this.has(key)){ return; }
-        const prop = new MultilangProp(key);
-        this.#extra[key] = prop;
+    add(key: string): MultilangProp{
+        const existing = this.get(key);
+        if(existing) {
+            return existing;
+        }
+        return this.#addNewKey(key);
     }
     //Adds multiple properties to extra if they dont exist
     addMulti(keys: string[]){
@@ -108,5 +120,25 @@ export class ManifestProps{
     //Return array of all property keys
     get keys(): string[] {
         return Object.keys(this.all);
+    }
+
+    getProperty(key: string): Property | null{
+        return this.#properties[key] || null;
+    }
+
+    #addNewKey(key: string, base: boolean = false): MultilangProp {
+        const prop = new MultilangProp(key);
+        if(base) {
+            this.#base[key] = prop;
+        } else {
+            this.#extra[key] = prop;
+        }
+        this.#addProperty(key);
+        return prop;
+    }
+
+    #addProperty(key: string){
+        const prop = new Property(key, schemas.String, true);
+        this.#properties[key] = prop;
     }
 };

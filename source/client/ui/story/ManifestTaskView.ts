@@ -30,6 +30,7 @@ import Tree from "@ff/ui/Tree";
 
 import { TaskView } from "../../components/CVTask";
 import NVNode from "../../nodes/NVNode";
+import { IManifestProvider, ManifestProps, isManifestProvider } from "client/utils/ManifestProps";
 ////////////////////////////////////////////////////////////////////////////////
 
 interface ITreeNode
@@ -55,19 +56,19 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
     }*/
     protected render()
     {
-        const languageManager = this.activeDocument.setup.language;
-        const langSwitch = `<sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>`;
-        const defMsg = html`<div class="sv-placeholder">Please select a node with the "iiif" tag to display its properties.</div>`;
         if(!this.activeDocument) {
             return;
         }
+        const languageManager = this.activeDocument.setup.language;
+        //const langSwitch = `<sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>`;
+        const defMsg = html`<div class="sv-placeholder">Please select a node that implements IManifestProvider.</div>`;
         if(!this.activeNode) {
             return defMsg;
         }
-        //Get only nodes with iiif tag
-        let nodes = this.activeNode.components.getArray().filter((component) => component["manifestProperties"]);
+        //Get only nodes with manifest properties
+        const nodes = this.activeNode.components.getArray().filter(isManifestProvider);
         //console.log(`Nodes size: ${nodes.length}`);
-        let node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree, but only if it has a component with the iiif tag
+        const node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree
         //Not a IIIF node
         if(!node) {
             return defMsg;
@@ -132,7 +133,7 @@ export class ManifestTree extends Tree<ITreeNode>
 
     protected createNodeTreeNode(node: Node): ITreeNode
     {
-        const components = node.components.getArray().filter(component => component["manifestProperties"]);
+        const components: (Component & IManifestProvider)[] = node.components.getArray().filter(isManifestProvider);
 
         return {
             id: node.id,
@@ -143,41 +144,32 @@ export class ManifestTree extends Tree<ITreeNode>
                 text: component.displayName,
                 classes: "ff-component",
                 property: null,
-                children: this.createPropertyNodes(component["manifestProperties"]),
+                children: this.createPropertyNodes(component.manifestProps),
             })),
         };
     }
 
-    protected createPropertyNodes(properties: Property[]): ITreeNode[]
+    protected createPropertyNodes(properties: ManifestProps): ITreeNode[]
     {
         const root: Partial<ITreeNode> = {
             children: []
         };
 
-        properties.forEach(property => {
-            const fragments = property.path.split(".");
+        Object.entries(properties.all).forEach(([key, value]) => {
             let node = root;
+            let child = node.children.find(node => node.text === key);
+            let prop = properties.getProperty(key);
+            //console.log(`Key: ${key}, Prop: ${prop}`);
 
-            const count = fragments.length;
-            const last = count - 1;
-
-            for (let i = 0; i < count; ++i) {
-                const fragment = fragments[i];
-                let child = node.children.find(node => node.text === fragment);
-
-                if (!child) {
-                    const id = i === last ? property.key : fragment;
-
-                    child = {
-                        id,
-                        text: fragment,
-                        classes: "",
-                        children: [],
-                        property: i === last ? property : null
-                    };
-                    node.children.push(child);
-                }
-                node = child;
+            if (!child) {
+                child = {
+                    id: key,
+                    text: key,
+                    classes: "",
+                    children: [],
+                    property: prop //UI Property object
+                };
+                node.children.push(child);
             }
         });
 
