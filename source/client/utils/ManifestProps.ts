@@ -31,10 +31,25 @@ export class MultilangProp{
     }
     //Get value for a specific language, default to English
     get(lang: TLanguageType = "EN"): string {
-        return this.#values[lang][0];
+        const langStr = lang.toString();
+        if(!this.#values[langStr] || !this.#values[langStr][0]){
+            return "";
+        }
+        return this.#values[langStr][0];
     }
     set(lang: TLanguageType, value: string) {
-        this.#values[lang][0] = value;
+        const langStr = lang.toString();
+        //Lang array doesnt exist
+        if(!this.#values[langStr]) {
+            this.#values[langStr] = [];
+        }
+        //First elem doesnt exist
+        if(!this.#values[langStr][0]){
+            this.#values[langStr].push(value);
+        }
+        else{
+            this.#values[langStr][0] = value;
+        }
     }
 
     key(): string{ return this.#key; }
@@ -75,6 +90,7 @@ export class ManifestProps{
         ManifestProps.defaultKeys.forEach((key) => {
             this.#addNewKey(key, addToBase);
         });
+        //this.fillPropertyValues();
     }
     //Get a property by key, check extra first then base, return null if not found
     get(key: string): MultilangProp | null {
@@ -131,7 +147,33 @@ export class ManifestProps{
     }
 
     setLangManager(langManager: CVLanguageManager){
+        //remnove old listener if it exists
+        if(this.#langManager) {
+            this.#langManager.off("tag-update", this.fillPropertyValues);
+        }
         this.#langManager = langManager;
+        this.#langManager.on("tag-update", this.fillPropertyValues);
+    }
+
+    get langManager(): CVLanguageManager {
+        return this.#langManager;
+    }
+
+    get properties(): Dictionary<Property> {  
+        return this.#properties;
+    }
+
+    fillPropertyValues = () => {
+        const lang = this.langManager ? this.langManager.codeString() : "EN";
+        if(!this.properties){
+            console.log("Properties null");
+            return;
+        }
+        Object.entries(this.properties).forEach(([key, prop]) => {
+            if(prop) {
+                prop.setValue(this.get(key)?.get(lang) || "");
+            }
+        });
     }
 
     #addNewKey(key: string, base: boolean = false): MultilangProp {
