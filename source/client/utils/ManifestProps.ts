@@ -1,6 +1,8 @@
 import { Dictionary } from "@ff/core/types";
 import Component from "@ff/graph/Component";
 import Property, { schemas } from "@ff/graph/Property";
+import CVLanguageManager from "client/components/CVLanguageManager";
+import { TLanguageType } from "client/schema/common";
 //import Component from "@ff/graph/Component";
 
 //Inerface that has to be implemented by any component that wants to have manifest properties, this is used to check if a node has manifest properties
@@ -28,17 +30,17 @@ export class MultilangProp{
         this.#values = {};
     }
     //Get value for a specific language, default to English
-    get(lang: string = "en"): string {
+    get(lang: TLanguageType = "EN"): string {
         return this.#values[lang][0];
     }
-    set(lang: string, value: string) {
+    set(lang: TLanguageType, value: string) {
         this.#values[lang][0] = value;
     }
 
     key(): string{ return this.#key; }
     get langs(): string[] { return Object.keys(this.#values); }
 
-    hasLang(lang: string): boolean {
+    hasLang(lang: TLanguageType): boolean {
         return !!this.#values[lang];
     }
     //Convert to a json string that can be directly added to a iiif manifest
@@ -65,6 +67,7 @@ export class ManifestProps{
     #extra: Dictionary<MultilangProp> = {};
 
     #properties: Dictionary<Property> = {}; //Used for interfacing with UI
+    #langManager: CVLanguageManager = null;
     //#parent: Component | null;
     constructor(){
         //Add base properties
@@ -84,7 +87,8 @@ export class ManifestProps{
         return null;
     }
     //Set property value for a specific language, if property doesn't exist create it in extra
-    set(key: string, value: string, lang: string = "en"){
+    set(key: string, value: string, lang: TLanguageType = "EN"){
+        
         if(this.#extra[key]){
             this.#extra[key].set(lang, value);
         }
@@ -126,6 +130,10 @@ export class ManifestProps{
         return this.#properties[key] || null;
     }
 
+    setLangManager(langManager: CVLanguageManager){
+        this.#langManager = langManager;
+    }
+
     #addNewKey(key: string, base: boolean = false): MultilangProp {
         const prop = new MultilangProp(key);
         if(base) {
@@ -139,6 +147,17 @@ export class ManifestProps{
 
     #addProperty(key: string){
         const prop = new Property(key, schemas.String, true);
+        prop.on("value", (newValue: string) => {
+            this.#onPropertyChanged(key, newValue);
+        });
         this.#properties[key] = prop;
+    }
+
+    #onPropertyChanged(key: string, value: string){
+        const prop = this.get(key);
+        const lang = this.#langManager ? this.#langManager.codeString() : "EN";
+        if(prop) {
+            prop.set(lang, value);
+        }
     }
 };

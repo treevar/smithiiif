@@ -33,15 +33,6 @@ import NVNode from "../../nodes/NVNode";
 import { IManifestProvider, ManifestProps, isManifestProvider } from "client/utils/ManifestProps";
 ////////////////////////////////////////////////////////////////////////////////
 
-interface ITreeNode
-{
-    id: string;
-    children: ITreeNode[];
-    text: string;
-    classes: string;
-    property?: Property;
-}
-
 @customElement("sv-manifest-task-view")
 export default class ManifestTaskView extends TaskView<CVManifestTask>
 {
@@ -73,6 +64,11 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         if(!node) {
             return defMsg;
         }
+        //Make manifest properties aware of language manager
+        nodes.forEach((node) => {
+            node.manifestProps.setLangManager(languageManager);
+        });
+        
         
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
