@@ -1,9 +1,25 @@
+/**
+ * 3D Foundation Project
+ * Copyright 2026 SmithIIIF Team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Dictionary } from "@ff/core/types";
 import Component from "@ff/graph/Component";
 import Property, { schemas } from "@ff/graph/Property";
 import CVLanguageManager from "client/components/CVLanguageManager";
 import { TLanguageType } from "client/schema/common";
-//import Component from "@ff/graph/Component";
 
 //Inerface that has to be implemented by any component that wants to have manifest properties, this is used to check if a node has manifest properties
 export interface IManifestProvider{
@@ -23,19 +39,20 @@ export class MultilangProp{
     //Default text used if iiifJSONString is called and there are no values
     static readonly defaultText: string = "NONE";
     #key: string; //Key of property
-    #values: Dictionary<string[]>; //Dictioary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
+    #values: Dictionary<string[]>; //Dictionary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
     
     constructor(key: string) {
         this.#key = key;
         this.#values = {};
     }
-    //Get value for a specific language, default to English
+    //Get value for a specific language
     get(lang: TLanguageType): string {
         if(!this.#values[lang] || !this.#values[lang][0]){
             return "";
         }
         return this.#values[lang][0];
     }
+    //Set value for specific lang
     set(lang: TLanguageType, value: string) {
         //Lang array doesnt exist
         if(!this.#values[lang]) {
@@ -50,42 +67,52 @@ export class MultilangProp{
         }
     }
 
-    key(): string{ return this.#key; }
+    get key(): string{ return this.#key; }
     get langs(): string[] { return Object.keys(this.#values); }
 
     hasLang(lang: TLanguageType): boolean {
         return !!this.#values[lang];
     }
     //Convert to a json string that can be directly added to a iiif manifest
-    //JSON Object containg a key for each langauge specified, with the value being a strign array
+    //JSON Object containing a key for each langauge specified, with the value being a string array
+    //incKey (Include Key): If true then the key is included in the JSON, ie "foo": {"EN":["bar"]}
+    //                      If false then just the data is returned, ie {"EN":["bar"]}
     //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
-    iiifJSONString(defIfEmpty: boolean = true): string {
+    iiifJSONString(incKey: boolean = false, defIfEmpty: boolean = true): string {
         const keys = this.langs;
+        let out = "";
+
+        if(incKey){
+            out += `"${this.key}: "`
+        }
         if(keys.length == 0 && defIfEmpty){ //No label set
-            return `{\n\t"none": ["${MultilangProp.defaultText}"]\n}`;
+            out += `{\n\t"none": ["${MultilangProp.defaultText}"]\n}`;
         }
         else{
-            return JSON.stringify(this.#values);
+            out += JSON.stringify(this.#values);
         }
+
+        return out;
     }
 };
 
-//Contains all manifest proprties with multilanguage support
+//Contains all manifest properties with multilanguage support
 export class ManifestProps{
     static readonly typeName: string = "ManifestProps";
     //Default keys added to every manifest object
-    static readonly defaultKeys = ["label", "summary", "rights", "requiredStatement"];
+    static readonly baseKeys = ["label", "summary", "rights", "requiredStatement"];
+    //Key/value stores
     #base: Dictionary<MultilangProp> = {};
     #extra: Dictionary<MultilangProp> = {};
 
-    #properties: Dictionary<Property> = {}; //Used for interfacing with UI
+    #uiProperties: Dictionary<Property> = {}; //Used for interfacing with UI
     #langManager: CVLanguageManager = null;
-    //#parent: Component | null;
+
     constructor(){
         //Add base properties
         const addToBase: boolean = true;
-        ManifestProps.defaultKeys.forEach((key) => {
+        ManifestProps.baseKeys.forEach((key) => {
             this.#addNewKey(key, addToBase);
         });
         //this.fillPropertyValues();
@@ -140,12 +167,21 @@ export class ManifestProps{
         return Object.keys(this.all);
     }
 
-    getProperty(key: string): Property | null{
-        return this.#properties[key] || null;
+    get baseKeys(): string[] {
+        return Object.keys(this.#base);
+    }
+
+    get extraKeys(): string[] {
+        return Object.keys(this.#extra);
+    }
+
+    getUIProperty(key: string): Property | null{
+        return this.#uiProperties[key] || null;
     }
 
     setLangManager(langManager: CVLanguageManager){
-        //remnove old listener if it exists
+        if(this.langManager && this.langManager.id === langManager.id){ return; } //Lang manager is the same
+        //remove old listener if it exists
         if(this.#langManager) {
             this.#langManager.off("tag-update", this.fillPropertyValues);
         }
@@ -158,53 +194,57 @@ export class ManifestProps{
     }
 
     get properties(): Dictionary<Property> {  
-        return this.#properties;
+        return this.#uiProperties;
     }
 
+    //Fill UI Properties with the current language's value
+    //If langManager wasnt set before calling then it defaults to english
     fillPropertyValues = () => {
-    const lang = this.langManager?.codeString() ?? "EN";
-    
-    Object.entries(this.properties).forEach(([key, prop]) => {
-        if(prop) {
-            const val = this.get(key)?.get(lang);
-            
-            prop.setValue(val);
-            
-        }
-    });
-}
+        const lang = this.langManager?.codeString() ?? "EN";
+        
+        Object.entries(this.properties).forEach(([key, prop]) => {
+            if(prop) {
+                const val = this.get(key)?.get(lang);
+                
+                prop.setValue(val);
+                
+            }
+        });
+    }
 
     #addNewKey(key: string, base: boolean = false): MultilangProp {
         let prop = new MultilangProp(key);
         if(base) {
             this.#base[key] = prop;
-            prop = this.#base[key];
         } else {
             this.#extra[key] = prop;
-            prop = this.#extra[key];
         }
-        this.#addProperty(key);
+        this.#addUIProperty(key);
         return prop;
     }
 
-    #addProperty(key: string){
-        const prop = new Property(key, schemas.String, true);
-        prop.on("value", (newValue: string) => {
+    #addUIProperty(key: string){
+        const uiProp = new Property(key, schemas.String, true);
+        uiProp.on("value", (newValue: string) => {
             this.#onPropertyChanged(key, newValue);
         });
-        this.#properties[key] = prop;
+        this.#uiProperties[key] = uiProp;
     }
 
+    //Updates internal value when UI property value is changed
     #onPropertyChanged(key: string, value: string){
-    // Only save if the value is actually new or different
-    const currentProp = this.get(key);
-    const lang = this.#langManager?.codeString() ?? "EN";
-    
-    // Check if the current value in the data matches the new value
-    // This prevents "sync-triggered" updates from overwriting your work
-    if (currentProp?.get(lang) !== value) {
-        console.log("Action: Save", { key, lang, value });
-        currentProp?.set(lang, value);
+        const prop = this.get(key);
+        if(!prop){ //Bad key
+            console.log(`ManifestProps.#onPropertyChanged(): Bad key '${key}'`);
+            return;
+        }
+        const lang = this.#langManager?.codeString() ?? "EN";
+        
+        //Only update if value changed
+        //Prevents event storm
+        if(prop.get(lang) !== value){
+            //console.log("Action: Save", { key, lang, value });
+            prop.set(lang, value);
+        }
     }
-}
 };

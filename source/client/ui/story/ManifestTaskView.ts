@@ -1,6 +1,9 @@
 /**
  * 3D Foundation Project
  * Copyright 2025 Smithsonian Institution
+ *  - SettingsTaskView
+ * Copyright 2026 SmithIIIF Team
+ *  - Modified for use with manifest properties
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-//http://localhost:3000/voyager-story-dev?model=https://raw.githubusercontent.com/IIIF/3d/main/assets/astronaut/astronaut.glb
-
-
-import CVManifestTask from "../../components/CVManifestTask";
+import CVManifestTask from "client/components/CVManifestTask";
 import Node from "@ff/graph/Node";
 import Component from "@ff/graph/Component";
 import Property from "@ff/graph/Property";
@@ -28,23 +27,13 @@ import "@ff/scene/ui/PropertyView";
 import { customElement, property, html } from "@ff/ui/CustomElement";
 import Tree from "@ff/ui/Tree";
 
-import { TaskView } from "../../components/CVTask";
-import NVNode from "../../nodes/NVNode";
+import { TaskView } from "client/components/CVTask";
+import NVNode from "client/nodes/NVNode";
 import { IManifestProvider, ManifestProps, isManifestProvider } from "client/utils/ManifestProps";
-////////////////////////////////////////////////////////////////////////////////
 
 @customElement("sv-manifest-task-view")
 export default class ManifestTaskView extends TaskView<CVManifestTask>
 {
-    /*protected connected()
-    {
-        super.connected();
-    }
-
-    protected disconnected()
-    {
-        super.disconnected();
-    }*/
     protected render()
     {
         if(!this.activeDocument) {
@@ -52,6 +41,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         }
         const languageManager = this.activeDocument.setup.language;
         //const langSwitch = `<sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>`;
+        //TODO: Add translations for this message VVVVV
         const defMsg = html`<div class="sv-placeholder">Please select a node that implements IManifestProvider.</div>`;
         if(!this.activeNode) {
             return defMsg;
@@ -73,10 +63,6 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
         </div>`;
-    }
-    protected onActiveNode(previous: NVNode, next: NVNode)
-    {
-        this.requestUpdate();
     }
 }
 
@@ -154,7 +140,7 @@ export class ManifestTree extends Tree<ITreeNode>
         Object.entries(properties.all).forEach(([key, value]) => {
             let node = root;
             let child = node.children.find(node => node.text === key);
-            let prop = properties.getProperty(key);
+            let prop = properties.getUIProperty(key);
             //console.log(`Key: ${key}, Prop: ${prop}`);
 
             if (!child) {
