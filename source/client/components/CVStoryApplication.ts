@@ -155,9 +155,12 @@ export default class CVStoryApplication extends Component
                 download.json(json, fileName);
             }
 
+            const doc = this.system.getMainComponent(CVDocument);
+            const title = doc.ins.title.value;
+
             if (ins.iiif.changed) {
                 const json = this.IIIFWriter.constructIIIFManifest(cvDocument);//console.log(json);
-                const fileName = "voyager_iiif.json";
+                const fileName = title ? `${title}-manifest.json` : "iiif-manifest.json";
                 download.json(json, fileName);
             }
         }
