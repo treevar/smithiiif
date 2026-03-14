@@ -1,0 +1,49 @@
+/**
+ * 3D Foundation Project
+ * Copyright 2025 Smithsonian Institution
+ *  - CVSettingsTask
+ * Copyright 2026 SmithIIIF Team
+ *  - Modified to work with ManifestTaskView
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Node } from "@ff/graph/Component";
+
+import CVTask from "./CVTask";
+import ManifestTaskView from "../ui/story/ManifestTaskView";
+
+////////////////////////////////////////////////////////////////////////////////
+
+export default class CVManifestTask extends CVTask
+{
+    static readonly typeName: string = "CVManifestTask";
+
+    static readonly text: string = "Manifest";
+    static readonly icon: string = "iiif";
+
+
+    constructor(node: Node, id: string)
+    {
+        super(node, id);
+
+        const configuration = this.configuration;
+        configuration.interfaceVisible = true;
+        configuration.bracketsVisible = true;
+    }
+
+    createView()
+    {
+        return new ManifestTaskView(this);
+    }
+}

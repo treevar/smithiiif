@@ -128,5 +128,6 @@ export const types = {
     Enum: <T>(path: string, enumeration: T, props?: SchemaProps<PropOf<T>>) => makeEnumType(enumeration, path, props),
     Option: (path: string, options: string[], props?: SchemaProps<number>) => makeOptionType(options, path, props),
     Object: <T>(path: string, type: TypeOf<T>, props?: SchemaProps<T>) => makeObjectType(type, path, props),
-    Event: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Event, path, props)
+    Event: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Event, path, props),
+    //Language: (path: string, options: string[], props?: SchemaProps<string>) => makeType<string>(schemas.String, path, props),
 };

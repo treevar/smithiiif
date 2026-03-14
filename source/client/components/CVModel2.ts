@@ -1,7 +1,9 @@
 /**
  * 3D Foundation Project
  * Copyright 2025 Smithsonian Institution
- *
+ * Copyright 2026 SmithIIIF Team
+ *  - Implement IManifestProvider Interface
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,6 +43,7 @@ import CVEnvironment from "./CVEnvironment";
 import CVSetup from "./CVSetup";
 import { Dictionary } from "client/../../libs/ff-core/source/types";
 import Asset from "client/models/Asset";
+import { ManifestProps, IManifestProvider } from "client/utils/ManifestProps";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +79,7 @@ export interface IOverlay
  * ### Events
  * - *"bounding-box"* - emitted after the model's bounding box changed
  */
-export default class CVModel2 extends CObject3D
+export default class CVModel2 extends CObject3D implements IManifestProvider
 {
     static readonly typeName: string = "CVModel2";
 
@@ -148,6 +151,8 @@ export default class CVModel2 extends CObject3D
             this.ins.doubleSided
         ];
     }
+
+    readonly manifestProps = new ManifestProps();
 
     private _derivatives = new DerivativeList();
     private _activeDerivative: Derivative = null;
@@ -253,6 +258,7 @@ export default class CVModel2 extends CObject3D
     create()
     {
         super.create();
+        
 
         // link units with annotation view
         const av = this.node.createComponent(CVAnnotationView);
