@@ -136,6 +136,16 @@ module.exports = function(env, argv)
     });
 
     const config = {
+        devServer: {
+            hot: true,                // Enables Hot Module Replacement
+            liveReload: true,         // Fallback to page reload if HMR fails
+            port: 4000,               // Or your preferred port
+            static: dirs.output,      // Serve files from your dist folder
+            client: {
+                overlay: true,        // Show errors in the browser
+            },
+        },
+
         mode: devMode,
 
         entry: entries,
