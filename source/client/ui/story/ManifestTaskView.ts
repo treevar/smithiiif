@@ -29,7 +29,7 @@ import Tree from "@ff/ui/Tree";
 
 import { TaskView } from "client/components/CVTask";
 import NVNode from "client/nodes/NVNode";
-import { IManifestProvider, ManifestProps, isManifestProvider } from "client/utils/ManifestProps";
+import { IManifestProvider, ManifestNode, ManifestProps, MultilangProp, isManifestProvider } from "client/utils/ManifestProps";
 
 @customElement("sv-manifest-task-view")
 export default class ManifestTaskView extends TaskView<CVManifestTask>
@@ -131,30 +131,31 @@ export class ManifestTree extends Tree<ITreeNode>
         };
     }
 
-    protected createPropertyNodes(properties: ManifestProps): ITreeNode[]
-    {
-        const root: Partial<ITreeNode> = {
-            children: []
+    protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
+        const data = properties.all;
+
+        // Helper to recursively build the tree from the ManifestNode data
+        const buildTree = (obj: ManifestNode, path: string): ITreeNode[] => {
+            if (typeof obj !== 'object' || obj === null || obj instanceof MultilangProp) {
+                return [];
+            }
+
+            return Object.entries(obj).map(([key, value]) => {
+                const currentPath = path === "" ? key : `${path}.${key}`;
+                const isLeaf = !(typeof value === 'object' && !(value instanceof MultilangProp));
+                
+                return {
+                    id: currentPath,
+                    text: key,
+                    classes: isLeaf ? "ff-property" : "ff-group",
+                    // If it's a leaf, look up the UI Property we registered earlier
+                    property: isLeaf ? properties.getUIProperty(currentPath) : null,
+                    // Recursively build children
+                    children: buildTree(value as ManifestNode, currentPath)
+                };
+            });
         };
 
-        Object.entries(properties.all).forEach(([key, value]) => {
-            let node = root;
-            let child = node.children.find(node => node.text === key);
-            let prop = properties.getUIProperty(key);
-            //console.log(`Key: ${key}, Prop: ${prop}`);
-
-            if (!child) {
-                child = {
-                    id: key,
-                    text: key,
-                    classes: "",
-                    children: [],
-                    property: prop //UI Property object
-                };
-                node.children.push(child);
-            }
-        });
-
-        return root.children;
+        return buildTree(data, "");
     }
 }
