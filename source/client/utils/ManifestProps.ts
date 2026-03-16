@@ -38,6 +38,7 @@ export type ManifestNode = string | MultilangProp | { [key: string]: ManifestNod
 //  Figuring out how to implement with UI will be hardest part 
 export class MultilangProp{
     static readonly typeName: string = "MultilangProp";
+    readonly isMultiLang: boolean = true;
     //Default text used if iiifJSONString is called and there are no values
     static readonly defaultText: string = "NONE";
     #values: Dictionary<string[]>; //Dictionary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
@@ -98,12 +99,22 @@ export class ManifestProps{
     static readonly baseProperties: ManifestNode = {
         "label": new MultilangProp(),
         "summary": new MultilangProp(),
-        "rights": "",
+        "rights": "", //Single language string
         "requiredStatement": {
             "label": new MultilangProp(),
             "value": new MultilangProp()
         },
-        "metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
+        "metadata": [
+            {
+                "label": new MultilangProp(),
+                "value": new MultilangProp()
+            },
+            {
+                "test":{
+                    "value1": ""
+                }
+            }
+        ] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
     }
     #data: Dictionary<ManifestNode> = {};
 
@@ -112,7 +123,7 @@ export class ManifestProps{
 
     constructor(){
         //Add base properties
-        this.addPropsFromObject(ManifestProps.baseProperties);
+        this.createFromObject(ManifestProps.baseProperties);
     }
     //Get a property by key, return null if not found
     get(key: string): ManifestNode | null {
@@ -172,8 +183,12 @@ export class ManifestProps{
         });
     };
 
-    
-    addPropsFromObject(obj: ManifestNode, curPath: string = "", parent: ManifestNode | null = null) {
+    //Calls structured clone to ensure the data isnt being shared across instances
+    createFromObject(obj: ManifestNode){
+        this.#addPropsFromObject(structuredClone(obj));
+    }
+
+    #addPropsFromObject(obj: ManifestNode, curPath: string = "", parent: ManifestNode | null = null) {
         Object.entries(obj).forEach(([key, value]) => {
             // Build the current path
             const thisPath = curPath.length === 0 ? key : `${curPath}.${key}`;
@@ -193,19 +208,20 @@ export class ManifestProps{
             if (Array.isArray(value)) {
                 // Recurse into array
                 value.forEach((item, index) => {
-                    this.addPropsFromObject(item, `${thisPath}.${index}`, parent[key][index]);
+                    this.#addPropsFromObject(item, `${thisPath}.${index}`, parent[key][index]);
                 });
             } 
-            else if (typeof value === 'object' && !(value instanceof MultilangProp)) {
+            else if (typeof value === 'object' && !value.isMultiLang) {
                 // Recurse into nested object
-                this.addPropsFromObject(value, thisPath, parent[key]);
+                this.#addPropsFromObject(value, thisPath, parent[key]);
             } 
             else {
                 // Leaf node: Bind to UI
                 if(!this.#uiProperties[thisPath]){
                     console.log(`adding path '${thisPath}'`);
                     //Send reference to internal data for easy updating
-                    if(value instanceof MultilangProp){
+                    if(value.isMultiLang === true){
+                        parent[key] = new MultilangProp(); //Structured clone will clone these as plain objects
                         this.#addMultiLangUIProperty(thisPath, parent[key]);
                     }
                     else{
