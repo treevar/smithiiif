@@ -285,7 +285,9 @@ export class ManifestProps{
             console.log(`ManifestProps.#onPrimitivePropertyChanged(): Bad parent/key Key: ${key}`);
             return;
         }
-        parent[key] = value;
+        if(parent[key] !== value){
+            parent[key] = value;
+        }
     }
 
 };
