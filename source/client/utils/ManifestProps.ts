@@ -77,7 +77,7 @@ export class MultilangProp{
     //JSON Object containing a key for each langauge specified, with the value being a string array
     //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
-    iiifJSONString(defIfEmpty: boolean = true): string {
+    toJSON(defIfEmpty: boolean = true): string {
         const keys = this.langs;
         let out = "";
 
@@ -184,6 +184,10 @@ export class ManifestProps{
     //Calls structured clone to ensure the data isnt being shared across instances
     createFromObject(obj: ManifestNode){
         this.#addPropsFromObject(structuredClone(obj));
+    }
+
+    serialize(){
+        return JSON.stringify(this.#data);
     }
 
     #addPropsFromObject(obj: ManifestNode, curPath: string = "", parent: ManifestNode | null = null) {
