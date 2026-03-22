@@ -77,18 +77,17 @@ export class MultilangProp{
     //JSON Object containing a key for each langauge specified, with the value being a string array
     //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
-    toJSON(defIfEmpty: boolean = true): string {
+    toJSON(defIfEmpty: boolean = true){
         const keys = this.langs;
-        let out = "";
 
         if(keys.length == 0 && defIfEmpty){ //No label set
-            out += `{\n\t"none": ["${MultilangProp.defaultText}"]\n}`;
+            return{
+                "none": [MultilangProp.defaultText]
+            };
         }
         else{
-            out += JSON.stringify(this.#values);
+            return this.#values;
         }
-
-        return out;
     }
 };
 
