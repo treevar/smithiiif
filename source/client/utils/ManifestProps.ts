@@ -250,7 +250,7 @@ export class ManifestProps{
         const uiProp = new Property(key, schemas.String, true);
         uiProp.on("value", (newValue: string) => {
             this.#onMultiLangPropertyChanged(node, newValue);
-        });
+        }, this);
         this.#uiProperties[key] = uiProp;
     }
 
@@ -260,8 +260,49 @@ export class ManifestProps{
         const uiProp = new Property(fullKey, schemas.String, true);
         uiProp.on("value", (newValue: string) => {
             this.#onPrimitivePropertyChanged(parent, parentKey, newValue);
-        });
+        }, this);
         this.#uiProperties[fullKey] = uiProp;
+    }
+
+    //Removes a property from data
+    //Assuming key is valid
+    #rmProperty(key: string){
+        this.#rmUICallbacks(key);
+
+        const endParentIdx = key.lastIndexOf('.');
+
+        let parentKey = endParentIdx !== -1 ? key.slice(0, endParentIdx) : "";
+        let childKey = endParentIdx !== -1 ? key.slice(endParentIdx+1) : key;
+
+        //If parentKey is empty then its a root node
+        const parent = parentKey.length !== 0 ? this.#resolvePath(parentKey) : this.#data as ManifestNode;
+        if(parent === null){ //This shouldnt happen
+            console.error(`ManifestProps.#rmProperty(): Error resolving parent key. parentKey: "${parentKey}", childKey: "${childKey}"`);
+            return;
+        }
+
+        delete parent[childKey];
+    }
+
+    //Removes all callabacks of type 'value' from the property
+    //Assuming key is valid
+    #rmUICallbacks(key: string){
+        let node = this.#resolvePath(key);
+        //if(node === null){ return; } //Bad key
+        if(Array.isArray(node)){
+            for(let i = 0; i < node.length; ++i){
+                this.#rmUICallbacks(key + `.${i}`);
+            }
+        }
+        else if(typeof node === 'object' && !(node instanceof MultilangProp)){ //Has children
+            Object.keys(node).forEach((childKey) => {
+                this.#rmUICallbacks(key + `.${childKey}`);
+            });
+        }
+        else{
+            let uiProp = this.getUIProperty(key);
+            uiProp?.off("value", null, this);
+        }
     }
 
     //Updates internal value when UI property value is changed
