@@ -132,7 +132,7 @@ export class ManifestTree extends Tree<ITreeNode>
     }
 
     protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
-        const data = properties.all;
+        const data = properties.data;
 
         // Helper to recursively build the tree from the ManifestNode data
         const buildTree = (obj: ManifestNode, path: string): ITreeNode[] => {

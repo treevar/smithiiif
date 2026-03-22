@@ -127,21 +127,19 @@ export class ManifestProps{
     }
     //Get a property by key, return null if not found
     get(key: string): ManifestNode | null {
-        if(this.#data[key]){ return this.#data[key]; }
-        return null;
+        return this.#resolvePath(key);
     }
-    //Returns whether the property exists in either base or extra
+    //Returns whether the property exists
     has(key: string): boolean {
         return !!this.get(key);
     }
-    //Return dictionary of all properties, with extra properties overriding base properties
-    get all(): Dictionary<ManifestNode> {
-        // Start with base, then spread extra over it so extra overrides base
+    //Return dictionary of all properties
+    get data(): Dictionary<ManifestNode> {
         return this.#data;
     }
     //Return array of all property keys
     get keys(): string[] {
-        return Object.keys(this.all);
+        return Object.keys(this.data);
     }
 
     getUIProperty(key: string): Property | null{
@@ -162,7 +160,7 @@ export class ManifestProps{
         return this.#langManager;
     }
 
-    get properties(): Dictionary<Property> {  
+    get uiProperties(): Dictionary<Property> {  
         return this.#uiProperties;
     }
 
@@ -171,7 +169,7 @@ export class ManifestProps{
     fillPropertyValues = () => {
         const lang = this.langManager?.codeString() ?? "EN";
         
-        Object.entries(this.properties).forEach(([path, prop]) => {
+        Object.entries(this.uiProperties).forEach(([path, prop]) => {
             const node = this.#resolvePath(path);
             
             if (node instanceof MultilangProp) {
