@@ -15,6 +15,17 @@
  * limitations under the License.
  */
 
+//Importing from manifest
+// - Need to ident arrays from multilang props
+// - build object from manifest and insert using createFromObject
+// - Need to add support for adding values via createFromObject
+
+//Adding optional props
+// - baseProperties are the ONLY required fields (label)
+// - When jsonify we can check useing the baseProperties object if an object is required
+// - Additional task view/popout for selecting from predefined properties
+//   * Will be defined in a static map of key to object to be processed into ManifestProps
+
 import { Dictionary } from "@ff/core/types";
 import Component from "@ff/graph/Component";
 import Property, { schemas } from "@ff/graph/Property";
@@ -280,6 +291,11 @@ export class ManifestProps{
         if(parent === null){ //This shouldnt happen
             console.error(`ManifestProps.#rmProperty(): Error resolving parent key. parentKey: "${parentKey}", childKey: "${childKey}"`);
             return;
+        }
+
+        //Need to update callbacks for elems after this as the index will shift 1 left
+        if(Array.isArray(parent[childKey])){
+
         }
 
         delete parent[childKey];
