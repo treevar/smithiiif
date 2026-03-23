@@ -79,24 +79,34 @@ export class MultilangProp{
         }
     }
 
-    get langs(): string[] { return Object.keys(this.#values); }
+    //Returns array of lang keys
+    //Keys are added if the corresponsing lang has a value set
+    get langs(): string[] {
+        let keys: string[];
+        Object.entries(this.#values).forEach(([key, value]) => {
+            if(value && value.length > 0){
+                keys.push(key);
+            }
+        });
+        return keys;
+    }
 
     hasLang(lang: TLanguageType): boolean {
-        return !!this.#values[lang];
+        return this.#values[lang] && this.#values[lang].length > 0;
     }
     //Convert to a json string that can be directly added to a iiif manifest
     //JSON Object containing a key for each langauge specified, with the value being a string array
     //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
-    toJSON(defIfEmpty: boolean = true){
+    toJSON(/*defIfEmpty: boolean = true*/){
         const keys = this.langs;
 
-        if(keys.length == 0 && defIfEmpty){ //No label set
+        /*if(keys.length == 0 && defIfEmpty){ //No label set
             return{
                 "none": [MultilangProp.defaultText]
             };
         }
-        else{
+        else*/{
             return this.#values;
         }
     }
