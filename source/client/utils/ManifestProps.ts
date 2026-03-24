@@ -25,6 +25,7 @@
 // - When jsonify we can check useing the baseProperties object if an object is required
 // - Additional task view/popout for selecting from predefined properties
 //   * Will be defined in a static map of key to object to be processed into ManifestProps
+// - CHECK, but every array property should have an add button to add new entries
 
 import { Dictionary } from "@ff/core/types";
 import Component from "@ff/graph/Component";
@@ -94,7 +95,7 @@ export class MultilangProp{
     hasLang(lang: TLanguageType): boolean {
         return this.#values[lang] && this.#values[lang].length > 0;
     }
-    //Convert to a json string that can be directly added to a iiif manifest
+    
     //JSON Object containing a key for each langauge specified, with the value being a string array
     //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
@@ -117,25 +118,19 @@ export class ManifestProps{
     static readonly typeName: string = "ManifestProps";
     //Default props added to every manifest object
     static readonly baseProperties: ManifestNode = {
-        "label": new MultilangProp(),
+        "label": new MultilangProp()
+    }
+
+    static readonly optionalProperties: Dictionary<ManifestNode> = {
         "summary": new MultilangProp(),
-        "rights": "", //Single language string
         "requiredStatement": {
             "label": new MultilangProp(),
             "value": new MultilangProp()
         },
-        "metadata": [
-            {
-                "label": new MultilangProp(),
-                "value": new MultilangProp()
-            },
-            {
-                "test":{
-                    "value1": ""
-                }
-            }
-        ] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
-    }
+        "rights": "",
+        //ANY array gets parsed into an array of ManifestProps
+        "metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
+    };
     #data: Dictionary<ManifestNode> = {};
 
     #uiProperties: Dictionary<Property> = {}; //Used for interfacing with UI

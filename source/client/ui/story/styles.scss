@@ -798,3 +798,34 @@ $color-component-meta-light: #d9d998;
 
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// SMITHIIIF
+.sv-manifest-prop-menu {
+  width: 350px;       // Slightly wider for property names
+  height: 450px;      // Fixed height instead of percentage
+  max-height: 80vh;   // Safety for small screens
+  display: flex;
+  flex-direction: column;
+
+  .ff-fullsize {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .sv-entry {
+    padding: 6px 10px;
+    border-bottom: 1px solid common.$color-background-darker;
+    cursor: pointer;
+    font-size: 0.9em;
+
+    &:hover {
+      background-color: rgba(common.$color-primary, 0.1);
+    }
+
+    &[selected] {
+      background-color: common.$color-primary;
+      color: common.$color-text-light;
+    }
+  }
+}
