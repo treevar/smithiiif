@@ -99,7 +99,14 @@ module.exports = function(env, argv)
     const appKey = env.app || "explorer";
     const isDevMode = argv.mode !== undefined ? argv.mode !== "production" : process.env["NODE_ENV"] !== "production";
     const isOffline = argv.offline !== undefined ? true : process.env["VOYAGER_OFFLINE"] === "true";
-
+    //Sloppy parsing of story params
+    let storyParams = 'uiMode="view" ';
+    if(env.mode){
+        storyParams += `mode="${env.mode}"`;
+    }
+    if(env.dragdrop){
+        storyParams += "dragdrop ";
+    }
 
     const devMode = isDevMode ? "development" : "production";
     const localTag = isOffline ? "-offline" : "";
@@ -114,7 +121,7 @@ module.exports = function(env, argv)
     }),{});
 
     const plugins =build_apps.map((app) =>{
-        const attr = app.name == "voyager-story" ? 'mode="standalone" uiMode="view" dragdrop' : 'dragdrop';
+        const attr = app.name == "voyager-story" ? storyParams : '';
         return new HTMLWebpackPlugin({
             filename: isDevMode ? `${app.name}-dev${localTag}.html` : `${app.name}${localTag}.html`,
             template: app.template,
@@ -129,6 +136,16 @@ module.exports = function(env, argv)
     });
 
     const config = {
+        devServer: {
+            hot: true,                // Enables Hot Module Replacement
+            liveReload: true,         // Fallback to page reload if HMR fails
+            port: 4000,               // Or your preferred port
+            static: dirs.output,      // Serve files from your dist folder
+            client: {
+                overlay: true,        // Show errors in the browser
+            },
+        },
+
         mode: devMode,
 
         entry: entries,
@@ -261,7 +278,8 @@ module.exports = function(env, argv)
         },
         ignoreWarnings: [/Failed to parse source map/],
         performance: {hints: false},
-        stats: {chunkModules: true, excludeModules: false }
+        stats: {chunkModules: true, excludeModules: false },
+        cache: { type: 'filesystem'}
 
     };
 

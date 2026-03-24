@@ -35,6 +35,7 @@ import CVActionsTask from "client/components/CVActionsTask";
 
 import NVVoyagerStory from "../nodes/NVoyagerStory";
 import NVTasks from "../nodes/NVTasks";
+import CVManifestTask from "client/components/CVManifestTask";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +57,7 @@ const types = [
     CVOverlayTask,
     CVAudioTask,
     CVActionsTask,
+    CVManifestTask,
 
     NVVoyagerStory,
     NVTasks,
