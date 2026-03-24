@@ -39,25 +39,27 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
 {
     protected handleAddProp(manifestProps: ManifestProps){
         const mainView : MainView = document.getElementsByTagName('voyager-story')[0] as MainView;
-        ManifestPropMenu.show(mainView, manifestProps, ManifestProps.optionalProperties).then((key) => {
+        ManifestPropMenu.show(mainView, manifestProps, manifestProps.optionals).then((key) => {
             if(!key || key.length < 0 || manifestProps.has(key)){
                 console.warn(`ManifestTaskView.handleAddProp(): Bad key: '${key}'`);
                 return;
             }
 
-            const addingProp: ManifestNode = ManifestProps.optionalProperties[key] ?? null;
-            if(addingProp == null){
+            const addingProp: ManifestNode = manifestProps.optionals[key] ?? null;
+            if(addingProp === null){
                 console.warn(`ManifestTaskView.handleAddProp(): Couldn't find data for key: '${key}'`);
             }
 
             let obj = {};
             obj[key] = addingProp;
-            manifestProps.createFromObject(obj);
+            manifestProps.createFromObject(obj, false);
+
             this.requestUpdate();
             const tree = this.renderRoot.querySelector('sv-manifest-tree');
             if (tree) {
                 (tree as any).requestUpdate();
             }
+
         }).catch(e => {});
     }
 

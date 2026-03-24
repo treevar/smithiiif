@@ -117,7 +117,7 @@ export class MultilangProp{
 export class ManifestProps{
     static readonly typeName: string = "ManifestProps";
     //Default props added to every manifest object
-    static readonly baseProperties: ManifestNode = {
+    static readonly baseProperties: Dictionary<ManifestNode> = {
         "label": new MultilangProp()
     }
 
@@ -131,12 +131,16 @@ export class ManifestProps{
         //ANY array gets parsed into an array of ManifestProps
         "metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
     };
+
     #data: Dictionary<ManifestNode> = {};
+    #optionals: Dictionary<ManifestNode> = {};
 
     #uiProperties: Dictionary<Property> = {}; //Used for interfacing with UI
     #langManager: CVLanguageManager = null;
 
-    constructor(){
+    constructor(optionalProps: Dictionary<ManifestNode> = ManifestProps.optionalProperties){
+        //Set optionals
+        this.#addPropsFromObject(structuredClone(optionalProps), this.#optionals);
         //Add base properties
         this.createFromObject(ManifestProps.baseProperties);
     }
@@ -179,6 +183,10 @@ export class ManifestProps{
         return this.#uiProperties;
     }
 
+    get optionals(): Dictionary<ManifestNode> {
+        return this.#optionals;
+    }
+
     //Fill UI Properties with the current language's value
     //If langManager wasnt set before calling then it defaults to english
     fillPropertyValues = () => {
@@ -197,15 +205,21 @@ export class ManifestProps{
     };
 
     //Calls structured clone to ensure the data isnt being shared across instances
-    createFromObject(obj: ManifestNode){
-        this.#addPropsFromObject(structuredClone(obj));
+    createFromObject(obj: ManifestNode, clone: boolean = true){
+        if(clone){
+            this.#addPropsFromObject(structuredClone(obj));
+        }
+        else{
+             this.#addPropsFromObject(obj);
+        }
     }
 
     serialize(){
         return JSON.stringify(this.#data);
     }
 
-    #addPropsFromObject(obj: ManifestNode, curPath: string = "", parent: ManifestNode | null = null) {
+    #addPropsFromObject(obj: ManifestNode, parent: ManifestNode = this.#data, curPath: string = "", createUiProps: boolean = false) {
+        createUiProps = parent === this.#data || createUiProps;
         Object.entries(obj).forEach(([key, value]) => {
             // Build the current path
             const thisPath = curPath.length === 0 ? key : `${curPath}.${key}`;
@@ -215,22 +229,21 @@ export class ManifestProps{
 
             // Add root to data registry if it doesnt exist
             if (curPath === "") {
-                if(!this.#data[key]){
-                    this.#data[key] = value;
+                if(!parent[key]){
+                    parent[key] = value;
                 }
-                parent = this.#data;
             }
             
 
             if (Array.isArray(value)) {
                 // Recurse into array
                 value.forEach((item, index) => {
-                    this.#addPropsFromObject(item, `${thisPath}.${index}`, parent[key][index]);
+                    this.#addPropsFromObject(item, parent[key][index], `${thisPath}.${index}`, createUiProps);
                 });
             } 
             else if (typeof value === 'object' && !value.isMultiLang) {
                 // Recurse into nested object
-                this.#addPropsFromObject(value, thisPath, parent[key]);
+                this.#addPropsFromObject(value, parent[key], thisPath, createUiProps);
             } 
             else {
                 // Leaf node: Bind to UI
@@ -239,10 +252,17 @@ export class ManifestProps{
                     //Send reference to internal data for easy updating
                     if(value.isMultiLang === true){
                         parent[key] = new MultilangProp(); //Structured clone will clone these as plain objects
-                        this.#addMultiLangUIProperty(thisPath, parent[key]);
+                        if(createUiProps){
+                            this.#addMultiLangUIProperty(thisPath, parent[key]);
+                        }
                     }
                     else{
-                        this.#addPrimitiveUIProperty(thisPath, parent, key);
+                        if (parent[key] === undefined) {
+                            parent[key] = value; 
+                        }
+                        if(createUiProps){
+                            this.#addPrimitiveUIProperty(thisPath, parent, key);
+                        }
                     }
                 }
             }
