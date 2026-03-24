@@ -47,6 +47,10 @@ export default class CVMediaManager extends CAssetManager
 
     static readonly articleFolder: string = "articles";
 
+    protected get documentProvider() {
+        return this.system.getMainComponent(CVDocumentProvider);
+    }
+
     protected get standaloneFileManager() {
         return this.getGraphComponent(CVStandaloneFileManager, true);
     }
@@ -119,7 +123,8 @@ export default class CVMediaManager extends CAssetManager
     }
 
     ingestFiles(files: Map<string, Blob>)
-    {
+    {        
+
         // If a scene file has been dropped, push to end
         const fileArray = Array.from(files);
         const docIndex = fileArray.findIndex( (element) => { return element[0].toLowerCase().indexOf(".svx.json") > -1 });
@@ -138,6 +143,12 @@ export default class CVMediaManager extends CAssetManager
         fileArray.forEach(([path, file]) => {
             const cleanfileName = decodeURI(path).slice(path.lastIndexOf('/') + 1);
             const filenameLower = cleanfileName.toLowerCase();
+
+            //access CVDocument to set uploadedFileName
+            const activeDocument = this.documentProvider.activeComponent;
+            if(activeDocument) {
+                activeDocument.ins.uploadedFileName.setValue(cleanfileName);
+            }
             
             if (filenameLower.match(/\.(gltf|glb|bin|json|html|jpg|jpeg|png|usdz|mp3|vtt)$/)) {
 

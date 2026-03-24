@@ -60,6 +60,8 @@ export default class CVDocument extends CRenderGraph
     protected intros: Dictionary<string> = {};
     protected _meta: CVMeta = null;
 
+    
+
     protected static readonly ins = {
         dumpJson: types.Event("Document.DumpJSON"),
         dumpTree: types.Event("Document.DumpTree"),
@@ -67,6 +69,7 @@ export default class CVDocument extends CRenderGraph
         title: types.String("Document.Title"),
         intro: types.String("Document.Intro", ""),
         copyright: types.String("Document.Copyright", ""),
+        uploadedFileName: types.String("Document.UploadedFileName", ""), //this should be the imported filename from a model file
     };
 
     protected static readonly outs = {
