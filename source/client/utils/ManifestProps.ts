@@ -218,6 +218,12 @@ export class ManifestProps{
         return JSON.stringify(this.#data);
     }
 
+    removeProp(key: string){
+        if(key.indexOf('.') == -1){ //Root
+            
+        }
+    }
+
     #addPropsFromObject(obj: ManifestNode, parent: ManifestNode = this.#data, curPath: string = "", createUiProps: boolean = false) {
         createUiProps = parent === this.#data || createUiProps;
         Object.entries(obj).forEach(([key, value]) => {

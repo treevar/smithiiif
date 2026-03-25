@@ -48,6 +48,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
             const addingProp: ManifestNode = manifestProps.optionals[key] ?? null;
             if(addingProp === null){
                 console.warn(`ManifestTaskView.handleAddProp(): Couldn't find data for key: '${key}'`);
+                return;
             }
 
             let obj = {};
