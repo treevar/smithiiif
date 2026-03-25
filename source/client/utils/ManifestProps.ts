@@ -276,7 +276,10 @@ export class ManifestProps{
     }
 
     #resolvePath(path: string): ManifestNode | null {
-        const keys = path.split('.');
+        let keys = path.split('.');
+        if(keys === null){
+            keys = [path];
+        }
         if(keys.length === 0){ return null; }
 
         let current = this.#data[keys[0]];
