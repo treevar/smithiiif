@@ -217,26 +217,7 @@ module.exports = function(env, argv)
         // loaders execute transforms on a per-file basis
         module: {
             rules: [
-                {
-                    // Targeted fix for the specific file causing Windows issues
-                    test: /styles\.scss$/, 
-                    // Use an absolute path to ensure Windows backslashes don't break the regex
-                    include: [ path.resolve(dirs.source, "client/ui/story/styles.scss") ], 
-                    use: [
-                        MiniCssExtractPlugin.loader,
-                        {
-                            loader: "css-loader",
-                            options: {
-                                modules: {
-                                    // This creates the 'default' export only for this file
-                                    namedExport: false, 
-                                    exportLocalsConvention: "camelCase",
-                                },
-                            },
-                        },
-                        "sass-loader"
-                    ]
-                },
+                
                 {
                     // Raw text and shader files
                     test: /\.(txt|glsl|hlsl|frag|vert|fs|vs)$/,
