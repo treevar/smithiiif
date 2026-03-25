@@ -59,14 +59,16 @@ export class MultilangProp{
         this.#values = {};
     }
     //Get value for a specific language
-    get(lang: TLanguageType): string {
+    get(lang: string): string {
+        lang = lang.toLowerCase();
         if(!this.#values[lang] || !this.#values[lang][0]){
             return "";
         }
         return this.#values[lang][0];
     }
     //Set value for specific lang
-    set(lang: TLanguageType, value: string) {
+    set(lang: string, value: string) {
+        lang = lang.toLowerCase();
         //Lang array doesnt exist
         if(!this.#values[lang]) {
             this.#values[lang] = [];
@@ -92,7 +94,8 @@ export class MultilangProp{
         return keys;
     }
 
-    hasLang(lang: TLanguageType): boolean {
+    hasLang(lang: string): boolean {
+        lang = lang.toLowerCase();
         return this.#values[lang] && this.#values[lang].length > 0;
     }
     
