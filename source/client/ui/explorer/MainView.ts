@@ -29,7 +29,7 @@ import ExplorerApplication, { IExplorerApplicationProps } from "../../applicatio
 import ContentView from "./ContentView";
 import ChromeView from "./ChromeView";
 
-import styles from "./styles.scss";
+import styles from './styles.scss';
 
 ////////////////////////////////////////////////////////////////////////////////
 // EXPLORER ICONS

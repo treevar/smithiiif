@@ -89,7 +89,7 @@ export default class StoryApplication
         // create the embedded explorer application, parse properties, start loading/presenting
         this.explorer = new ExplorerApplication(null, props, /* embedded */ true);
         this.props = props || {};
-
+        
         this.system = this.explorer.system;
 
         // register additional story tool components
