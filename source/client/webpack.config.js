@@ -239,18 +239,25 @@ module.exports = function(env, argv)
                     }
                 },
                 {
-                    // Transpile SCSS to CSS and concatenate
-                    test: /\.scss$/,
-                    use: [         
-                        MiniCssExtractPlugin.loader,
-                        "css-loader",
-                        "sass-loader"
-                    ],
-                    type: "javascript/auto",
-                    issuer: {
-                        not: [/source\/client\/ui\/explorer/]     // currently only inlining explorer css
-                    }
-                },
+                // Transpile SCSS to CSS and concatenate
+                test: /\.scss$/,
+                use: [         
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: "css-loader",
+                        options: {
+                            modules: {
+                                namedExport: false, 
+                            },
+                        },
+                    },
+                    "sass-loader"
+                ],
+                type: "javascript/auto",
+                issuer: {
+                    not: [/source\/client\/ui\/explorer/]
+                }
+            },
                 {
                     resourceQuery: /raw/,
                     type: "asset/source",
