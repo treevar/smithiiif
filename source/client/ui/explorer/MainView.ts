@@ -29,8 +29,7 @@ import ExplorerApplication, { IExplorerApplicationProps } from "../../applicatio
 import ContentView from "./ContentView";
 import ChromeView from "./ChromeView";
 
-// The '!' syntax tells Webpack to use these loaders specifically for this file
-import styles from "!!style-loader!css-loader?modules!sass-loader!./styles.scss";
+import styles from "./styles.scss";
 
 ////////////////////////////////////////////////////////////////////////////////
 // EXPLORER ICONS
