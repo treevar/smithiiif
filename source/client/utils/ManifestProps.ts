@@ -83,7 +83,7 @@ export class MultilangProp{
     //Returns array of lang keys
     //Keys are added if the corresponsing lang has a value set
     get langs(): string[] {
-        let keys: string[];
+        let keys: string[] = [];
         Object.entries(this.#values).forEach(([key, value]) => {
             if(value && value.length > 0){
                 keys.push(key);
