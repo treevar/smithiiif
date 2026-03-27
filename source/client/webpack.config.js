@@ -236,7 +236,7 @@ module.exports = function(env, argv)
                     type: "asset/source",
                     issuer: {
                         //include: /source\/client\/ui\/explorer/     // currently only inlining explorer css
-                        and: [/source\/client\/ui\/explorer/]     // currently only inlining explorer css
+                        and: [/source[\\/]client[\\/]ui[\\/]explorer/]     // currently only inlining explorer css
                     }
                 },
                 {
@@ -249,7 +249,7 @@ module.exports = function(env, argv)
                     ],
                     type: "javascript/auto",
                     issuer: {
-                        not: [/source\/client\/ui\/explorer/]     // currently only inlining explorer css
+                        not: [/source[\\/]client[\\/]ui[\\/]explorer/]    // currently only inlining explorer css
                     }
                 },
                 {
