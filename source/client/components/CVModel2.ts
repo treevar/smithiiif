@@ -1,8 +1,9 @@
 /**
  * 3D Foundation Project
  * Copyright 2025 Smithsonian Institution
+ * 
  * Copyright 2026 SmithIIIF Team
- *  - Implement IManifestProvider Interface
+ * * Implement IManifestProvider Interface
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

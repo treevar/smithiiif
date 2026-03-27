@@ -1,9 +1,10 @@
 /**
  * 3D Foundation Project
  * Copyright 2025 Smithsonian Institution
- *  - SettingsTaskView
+ * * SettingsTaskView.ts
+ * 
  * Copyright 2026 SmithIIIF Team
- *  - Modified for use with manifest properties
+ * * Modified for use with manifest properties
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +54,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
 
             let obj = {};
             obj[key] = addingProp;
-            manifestProps.createFromObject(obj, false);
+            manifestProps.createFromObject(obj, false, true);
 
             this.requestUpdate();
             const tree = this.renderRoot.querySelector('sv-manifest-tree');
