@@ -63,14 +63,12 @@ export class MultilangProp{
     private values: Dictionary<string[]>; //Dictionary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
     
     constructor(startVals: Dictionary<string[]> | string = null) {
-        if(typeof startVals === 'object'){
-            if(startVals === null){
-                this.values = {};
-            }
-            else{
-                //Copy as its pass by ref
-                this.values = structuredClone(startVals);
-            }
+        if(startVals === null){
+            this.values = {};
+        }
+        else if(typeof startVals === 'object'){
+            //Copy as its pass by ref
+            this.values = structuredClone(startVals);
         }
         else{ //String (default val for english)
             this.values = {"en":[startVals]};
