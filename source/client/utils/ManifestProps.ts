@@ -146,9 +146,9 @@ export class ManifestProps{
             "label": new MultilangProp(),
             "value": new MultilangProp()
         },
-        "rights": "",
+        "rights": ""
         //ANY array gets parsed into an array of ManifestProps
-        "metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
+        //"metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
     };
 
     #data: Dictionary<ManifestNode> = {};
