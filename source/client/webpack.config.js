@@ -217,6 +217,7 @@ module.exports = function(env, argv)
         // loaders execute transforms on a per-file basis
         module: {
             rules: [
+                
                 {
                     // Targeted fix for the specific file causing Windows issues
                     test: /styles\.scss$/, 
