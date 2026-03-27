@@ -141,12 +141,12 @@ export class ManifestProps{
     }
 
     static readonly optionalProperties: Dictionary<ManifestNode> = {
-        "summary": new MultilangProp("Summary test eng"),
+        "summary": new MultilangProp(),
         "requiredStatement": {
             "label": new MultilangProp(),
             "value": new MultilangProp()
         },
-        "rights": "Test",
+        "rights": "",
         //ANY array gets parsed into an array of ManifestProps
         "metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
     };

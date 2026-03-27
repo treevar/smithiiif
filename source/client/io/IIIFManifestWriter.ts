@@ -30,6 +30,7 @@ import CVStandaloneFileManager from "client/components/CVStandaloneFileManager";
 import documentTemplate from "client/templates/default.svx.json";
 import CVStoryApplication from "client/components/CVStoryApplication";
 import unitScaleFactor from "client/utils/unitScaleFactor";
+import { MultilangProp } from "client/utils/ManifestProps";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -243,12 +244,18 @@ export default class IIIFManifestWriter {
                 const asset = child.model.activeDerivative.findAsset(EAssetType.Model)
                 const url = this.assetManager.getAssetUrl(asset.data.uri);
 
+                //Get label for model
+                const label = child.model.manifestProps.get("label") as MultilangProp;
+        
                 // add source
                 const source = {
                     id: this.standaloneFileManager ? this.standaloneFileManager.blobUrlToFileUrl(url) || url : url,
                     type: "Model",
-                    label: {"en": [child.model.ins.name.value]},
-                    format: asset.data.mimeType
+                    label: label.langs.length > 0 ? label : {"en" : [child.model.ins.name.value]},
+                    format: asset.data.mimeType,
+                }
+                if(child.model.manifestProps.has("requiredStatement")){
+                    source["requiredStatement"] = child.model.manifestProps.get("requiredStatement");  
                 }
                 annotation.body["source"] = source;
 
