@@ -217,6 +217,7 @@ module.exports = function(env, argv)
         // loaders execute transforms on a per-file basis
         module: {
             rules: [
+                
                 {
                     // Raw text and shader files
                     test: /\.(txt|glsl|hlsl|frag|vert|fs|vs)$/,
@@ -239,25 +240,18 @@ module.exports = function(env, argv)
                     }
                 },
                 {
-                // Transpile SCSS to CSS and concatenate
-                test: /\.scss$/,
-                use: [         
-                    MiniCssExtractPlugin.loader,
-                    {
-                        loader: "css-loader",
-                        options: {
-                            modules: {
-                                namedExport: false, 
-                            },
-                        },
-                    },
-                    "sass-loader"
-                ],
-                type: "javascript/auto",
-                issuer: {
-                    not: [/source\/client\/ui\/explorer/]
-                }
-            },
+                    // Transpile SCSS to CSS and concatenate
+                    test: /\.scss$/,
+                    use: [         
+                        MiniCssExtractPlugin.loader,
+                        "css-loader",
+                        "sass-loader"
+                    ],
+                    type: "javascript/auto",
+                    issuer: {
+                        not: [/source\/client\/ui\/explorer/]     // currently only inlining explorer css
+                    }
+                },
                 {
                     resourceQuery: /raw/,
                     type: "asset/source",

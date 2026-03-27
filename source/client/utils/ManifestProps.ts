@@ -27,6 +27,9 @@
 //   * Will be defined in a static map of key to object to be processed into ManifestProps
 // - CHECK, but every array property should have an add button to add new entries
 
+//Arrays need a seperate dictionary of object templates so we know what to insert when we add elems to the array
+// #arrayDefs: Dictionary<ManifestNode> = {}
+
 import { Dictionary } from "@ff/core/types";
 import Component from "@ff/graph/Component";
 import Property, { schemas } from "@ff/graph/Property";
