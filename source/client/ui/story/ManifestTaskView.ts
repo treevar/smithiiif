@@ -1,9 +1,10 @@
 /**
  * 3D Foundation Project
  * Copyright 2025 Smithsonian Institution
- *  - SettingsTaskView
+ * * SettingsTaskView.ts
+ * 
  * Copyright 2026 SmithIIIF Team
- *  - Modified for use with manifest properties
+ * * Modified for use with manifest properties
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +29,45 @@ import { customElement, property, html } from "@ff/ui/CustomElement";
 import Tree from "@ff/ui/Tree";
 
 import { TaskView } from "client/components/CVTask";
+import MainView from "client/ui/explorer/MainView";
 import NVNode from "client/nodes/NVNode";
-import { IManifestProvider, ManifestProps, isManifestProvider } from "client/utils/ManifestProps";
+import { IManifestProvider, ManifestNode, ManifestProps, MultilangProp, isManifestProvider } from "client/utils/ManifestProps";
+import ManifestPropMenu from "./ManifestPropMenu";
+import Button from "@ff/ui/Button";
 
 @customElement("sv-manifest-task-view")
 export default class ManifestTaskView extends TaskView<CVManifestTask>
 {
+    protected handleAddProp(manifestProps: ManifestProps){
+        const mainView : MainView = document.getElementsByTagName('voyager-story')[0] as MainView;
+        ManifestPropMenu.show(mainView, manifestProps, manifestProps.optionals).then((key) => {
+            if(!key || key.length < 0 || manifestProps.has(key)){
+                console.warn(`ManifestTaskView.handleAddProp(): Bad key: '${key}'`);
+                return;
+            }
+
+            const addingProp: ManifestNode = manifestProps.optionals[key] ?? null;
+            if(addingProp === null){
+                console.warn(`ManifestTaskView.handleAddProp(): Couldn't find data for key: '${key}'`);
+                return;
+            }
+
+            let obj = {};
+            obj[key] = addingProp;
+            manifestProps.createFromObject(obj, false, true);
+
+            this.requestUpdate();
+            const tree = this.renderRoot.querySelector('sv-manifest-tree');
+            if (tree) {
+                (tree as any).requestUpdate();
+            }
+
+        }).catch(e => {});
+    }
+
+    protected createAddButton(manifestProps: ManifestProps){
+        return html`<ff-button icon="create" class="ff-button ff-control" title="Add Property" @click=${() => {this.handleAddProp(manifestProps)}}></ff-button>`;
+    }
     protected render()
     {
         if(!this.activeDocument) {
@@ -62,6 +96,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
+            ${this.createAddButton(nodes[0].manifestProps)}
         </div>`;
     }
 }
@@ -96,7 +131,7 @@ export class ManifestTree extends Tree<ITreeNode>
 
     protected update(changedProperties: Map<PropertyKey, unknown>)
     {
-        if (changedProperties.has("node")) {
+        if (changedProperties.has("node") || this.hasUpdated) {
             this.root = this.createNodeTreeNode(this.node);
         }
 
@@ -131,30 +166,31 @@ export class ManifestTree extends Tree<ITreeNode>
         };
     }
 
-    protected createPropertyNodes(properties: ManifestProps): ITreeNode[]
-    {
-        const root: Partial<ITreeNode> = {
-            children: []
+    protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
+        const data = properties.data;
+
+        // Helper to recursively build the tree from the ManifestNode data
+        const buildTree = (obj: ManifestNode, path: string): ITreeNode[] => {
+            if (typeof obj !== 'object' || obj === null || obj instanceof MultilangProp) {
+                return [];
+            }
+
+            return Object.entries(obj).map(([key, value]) => {
+                const currentPath = path === "" ? key : `${path}.${key}`;
+                const isLeaf = !(typeof value === 'object' && !(value instanceof MultilangProp));
+                
+                return {
+                    id: currentPath,
+                    text: key,
+                    classes: isLeaf ? "ff-property" : "ff-group",
+                    // If it's a leaf, look up the UI Property we registered earlier
+                    property: isLeaf ? properties.getUIProperty(currentPath) : null,
+                    // Recursively build children
+                    children: buildTree(value as ManifestNode, currentPath)
+                };
+            });
         };
 
-        Object.entries(properties.all).forEach(([key, value]) => {
-            let node = root;
-            let child = node.children.find(node => node.text === key);
-            let prop = properties.getUIProperty(key);
-            //console.log(`Key: ${key}, Prop: ${prop}`);
-
-            if (!child) {
-                child = {
-                    id: key,
-                    text: key,
-                    classes: "",
-                    children: [],
-                    property: prop //UI Property object
-                };
-                node.children.push(child);
-            }
-        });
-
-        return root.children;
+        return buildTree(data, "");
     }
 }
