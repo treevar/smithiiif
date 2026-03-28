@@ -45,6 +45,8 @@ export interface IManifestProvider{
     readonly manifestProps: ManifestProps;
 }
 
+//Says its a component as well so it doesnt lose idetity when this is called
+// *If we ever meed to add ManifestProps to a non component then this will need ot be changed
 export function isManifestProvider(obj: any): obj is Component & IManifestProvider {
     return obj && obj.manifestProps instanceof ManifestProps;
 }
@@ -62,6 +64,7 @@ export class MultilangProp{
     static readonly defaultText: string = "NONE";
     private values: Dictionary<string[]>; //Dictionary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
     
+    //startValsis a language object that will be used to init the internal
     constructor(startVals: Dictionary<string[]> | string = null) {
         if(startVals === null){
             this.values = {};
@@ -110,14 +113,13 @@ export class MultilangProp{
         return keys;
     }
 
+    //Returns whether a value is set for the specified lang (empty string doesnt count)
     hasLang(lang: TLanguageType): boolean {
         const langStr = lang.toLowerCase();
         return this.values[langStr] && this.values[langStr].length > 0;
     }
     
     //JSON Object containing a key for each langauge specified, with the value being a string array
-    //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
-    //                               If false and no values then we return an empty object
     toJSON(/*defIfEmpty: boolean = true*/){
         //const keys = this.langs;
 
@@ -147,7 +149,6 @@ export class ManifestProps{
             "value": new MultilangProp()
         },
         "rights": ""
-        //ANY array gets parsed into an array of ManifestProps
         //"metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
     };
 
@@ -175,7 +176,7 @@ export class ManifestProps{
     get data(): Dictionary<ManifestNode> {
         return this.#data;
     }
-    //Return array of all property keys
+    //Return array of all root property keys
     get keys(): string[] {
         return Object.keys(this.data);
     }
@@ -184,6 +185,8 @@ export class ManifestProps{
         return this.#uiProperties[key] || null;
     }
 
+    //Since this isnt part of voyager's node system it doesnt have acces to the lang mananger
+    //Set lang mananger so we can properly get langs from multilang props
     setLangManager(langManager: CVLanguageManager){
         if(this.langManager && this.langManager.id === langManager.id){ return; } //Lang manager is the same
         //remove old listener if it exists
@@ -202,6 +205,8 @@ export class ManifestProps{
         return this.#uiProperties;
     }
 
+    //Optional properties that can be added
+    // *Note these could already be added
     get optionals(): Dictionary<ManifestNode> {
         return this.#optionals;
     }
@@ -229,14 +234,75 @@ export class ManifestProps{
         this.#addPropsFromObject(addingObj, this.#data, "", true, copyData);
     }
 
+    //Convert entire data object into stringified JSON
     serialize(){
         return JSON.stringify(this.#data);
     }
 
+    //If the value associated with the key has children we need to rm those as well
     removeProp(key: string){
         if(key.indexOf('.') == -1){ //Root
             
         }
+    }
+
+    //Add all properties currently in data to the supplied object if they have a value set
+    //Returns the new object
+    // *Note this does not modify obj
+    addToObject(obj: object): object{
+        let addingObj = {};
+
+        Object.entries(this.#data).forEach(([key, value]) => {
+            if(this.nodeHasValue(value)){
+                addingObj[key] = value;
+            }
+        });
+
+        obj = { //Breaks reference
+            ...obj,
+            ...addingObj
+        }
+
+        return obj;
+    }
+
+    //Returns whether the manifest node supplied has a value set
+    nodeHasValue(node: ManifestNode): boolean{
+        if(node === null){ return false; }
+
+        if(Array.isArray(node)){
+            if(node.length === 0){ return false; }
+
+            let i = 0;
+            for(; i < node.length; ++i){
+                if(this.nodeHasValue(node[i])){ break; }
+            }
+
+            if(i < node.length){ return true; }
+            else{ return false; }
+        }
+        else if(typeof node === 'object'){
+            if(node instanceof MultilangProp){
+                //Has a val set for atleast one lang
+                if(node.langs.length > 0){ return true; }
+                else{ return false; }
+            }
+            //Make sure object isnt empty
+            const objKeys = Object.keys(node);
+            if(objKeys.length === 0){ return false; }
+
+            let i = 0;
+            for(; i < objKeys.length; ++i){
+                if(this.nodeHasValue(node[objKeys[i]])){ break; }
+            }
+
+            if(i < objKeys.length){ return true; }
+            else{ return false; }
+        }
+        else{ //Primitive
+            return node.length > 0;
+        }
+
     }
 
     #addPropsFromObject(obj: ManifestNode, parent: ManifestNode = this.#data, curPath: string = "", createUiProps: boolean = false, loadData: boolean = false) {
@@ -299,9 +365,6 @@ export class ManifestProps{
 
     #resolvePath(path: string): ManifestNode | null {
         let keys = path.split('.');
-        if(keys === null){
-            keys = [path];
-        }
         if(keys.length === 0){ return null; }
 
         let current = this.#data[keys[0]];
