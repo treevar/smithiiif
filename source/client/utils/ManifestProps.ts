@@ -288,15 +288,15 @@ export class ManifestProps{
                 else{ return false; }
             }
             //Make sure object isnt empty
-            const objKeys = Object.keys(node);
-            if(objKeys.length === 0){ return false; }
+            const objValues = Object.values(node);
+            if(objValues.length === 0){ return false; }
 
             let i = 0;
-            for(; i < objKeys.length; ++i){
-                if(this.nodeHasValue(node[objKeys[i]])){ break; }
+            for(; i < objValues.length; ++i){
+                if(this.nodeHasValue(objValues[i])){ break; }
             }
 
-            if(i < objKeys.length){ return true; }
+            if(i < objValues.length){ return true; }
             else{ return false; }
         }
         else{ //Primitive
