@@ -253,7 +253,7 @@ export class ManifestProps{
         let addingObj = {};
 
         Object.entries(this.#data).forEach(([key, value]) => {
-            if(this.nodeHasValue(value)){
+            if(ManifestProps.nodeHasValue(value)){
                 addingObj[key] = value;
             }
         });
@@ -267,7 +267,7 @@ export class ManifestProps{
     }
 
     //Returns whether the manifest node supplied has a value set
-    nodeHasValue(node: ManifestNode): boolean{
+    static nodeHasValue(node: ManifestNode): boolean{
         if(node === null){ return false; }
 
         if(Array.isArray(node)){
