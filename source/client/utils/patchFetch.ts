@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-let ogFetch: typeof fetch;
+let ogFetch: typeof fetch = window.fetch.bind(window);
 let defaultProxyUrl: string = "https://iiif-proxy.lfod.top/?url=";
 //Can be IP or URL
 let proxyUrl: string = "";
@@ -49,11 +49,18 @@ export function proxiedFetch(input: RequestInfo | URL, init?: RequestInit): Prom
         return Promise.reject(new Error("proxiedFetch called and proxyUrl not set"));
     }
     let url: string = input instanceof URL ? input.toString() : input instanceof Request ? input.url : input;
-    if(/^http:\/\/localhost(:\d+)?$/.test(url) || !url.endsWith(".glb")){//Don't send localhost reqs
+    const isLocal = 
+        url.includes("localhost") || 
+        url.includes("127.0.0.1") || 
+        url.includes("[::1]") || 
+        url.includes(".local");
+
+    // 2. If local, or if it's NOT a Smithsonian/IIIF asset, bypass proxy
+    if (isLocal) {
         return ogFetch(input, init);
     }
     //Format for sending
-    url = encodeURI(url);
+    url = encodeURIComponent(url);
     url = proxyUrl + url;
     //Retain all options from original request and add proxy options, proxy options will override any conflicting options from init
     const opts: RequestInit = {
@@ -70,6 +77,7 @@ export function smartFetch(input: RequestInfo | URL, init?: RequestInit): Promis
     if(!ogFetch){
        return Promise.reject(new Error("ogFetch not set, must call patchFetch before calling smartFetch"));
     }
+    //return ogFetch(input, init);
     //Proxy only handles GET
     if(init){
         if(init.method && init.method !== "GET"){
@@ -82,17 +90,17 @@ export function smartFetch(input: RequestInfo | URL, init?: RequestInit): Promis
             if(res.ok){ resolve(res); } //Normal fetch worked
             else{
                 if(proxyHttpCodes.includes(res.status)){
-                    return proxiedFetch(input, init);
+                    return resolve(proxiedFetch(input, init));
                 }
             }
             //Code not handled by proxy, return ogFetch res
-            resolve(res);
+            return resolve(res);
         }).catch((err: TypeError) => { //Could be net failure
             if(!window.navigator.onLine){
                 console.warn("smartFecth(): Network disconnected");
-                reject(new Error("Network Disconnected"));
+                return reject(new Error("Network Disconnected"));
             }
-            return proxiedFetch(input, init);
+            return resolve(proxiedFetch(input, init));
         }) 
     });
 }
@@ -109,7 +117,7 @@ export default function patchFetch(newProxyUrl: string = defaultProxyUrl, header
     if(headers){
         proxyOptions['headers'] = headers;
     }
-    ogFetch = window.fetch;
+    //ogFetch = window.fetch;
     proxyUrl = newProxyUrl;
     window.fetch = smartFetch;
 }

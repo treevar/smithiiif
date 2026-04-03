@@ -37,35 +37,25 @@ export default {
     }
 
     try {
-      // 1. Clone the incoming headers
-      const forwardHeaders = new Headers(request.headers);
+  const response = await fetch(targetUrl, {
+    headers: { 'Accept-Encoding': 'identity' } // Ask Smithsonian for uncompressed data
+  });
 
-      // 2. Scrub the "Proxy-Specific" headers
-      const toDelete = [
-          "host", 
-          "origin", 
-          "referer", 
-          "cookie", 
-          "cf-ray", 
-          "cf-connecting-ip"
-      ];
-    
-      toDelete.forEach(header => forwardHeaders.delete(header));
+  const newHeaders = new Headers(response.headers);
+  newHeaders.set("Access-Control-Allow-Origin", origin || "*");
+  newHeaders.set("Vary", "Origin");
 
-      // 4. Fetch and Stream the Asset
-      const response = await fetch(targetUrl);
+  // CRITICAL: Prevent Firefox from choking on double-compression
+  newHeaders.delete("Content-Encoding");
+  newHeaders.delete("Content-Length"); 
+  newHeaders.delete("Set-Cookie");
 
-      const proxyResponse = new Response(response.body, {
-        status: response.status,
-        headers: forwardHeaders
-      });
-
-      proxyResponse.headers.set("Access-Control-Allow-Origin", origin);
-      proxyResponse.headers.set("Vary", "Origin");
-
-      return proxyResponse;
-    } catch (err) {
-      return new Response("Proxy Error: Destination Unreachable", { status: 502 });
-    }
+  return new Response(response.body, {
+    status: response.status,
+    headers: newHeaders
+  });
+} catch (err) {
+  return new Response("Proxy Error", { status: 502 });
+}
   },
 };

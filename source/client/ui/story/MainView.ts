@@ -111,7 +111,7 @@ export default class MainView extends CustomElement
     constructor(application?: StoryApplication)
     {
         super();
-        patchFetch("https://iiif-proxy.github-316.workers.dev/url=");
+        patchFetch("https://iiif-proxy.github-316.workers.dev/?url=");
         this.onUnload = this.onUnload.bind(this);
 
         if (application) {
