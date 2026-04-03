@@ -1,9 +1,5 @@
-export interface Env {
-  PROXY_SECRET: string; 
-}
-
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
     const origin = request.headers.get("Origin") || "";
@@ -20,7 +16,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": isAllowed ? origin : "https://iiif.lfod.top",
           "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "X-Proxy-Secret, Content-Type",
+          "Access-Control-Allow-Headers": "Content-Type",
           "Access-Control-Max-Age": "86400",
           "Vary": "Origin",
         },
@@ -32,19 +28,17 @@ export default {
       return new Response("CORS Forbidden: Origin not authorized", { status: 403 });
     }
 
-    if (request.headers.get("X-Proxy-Secret") !== env.PROXY_SECRET) {
-      return new Response("Unauthorized: Invalid Secret Key", { status: 401 });
-    }
-
     if (!targetUrl) {
       return new Response("Missing 'url' parameter", { status: 400 });
     }
 
+    if(targetUrl.includes("iiif-proxy.lfod.top")){
+      return new Response("Target can not be the proxy", {status: 400});
+    }
+
     try {
       // 4. Fetch and Stream the Asset
-      const response = await fetch(targetUrl, {
-        headers: { "User-Agent": "IIIF-Proxy-Lfod" }
-      });
+      const response = await fetch(targetUrl);
 
       const proxyResponse = new Response(response.body, {
         status: response.status,
