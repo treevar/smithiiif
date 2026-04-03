@@ -15,6 +15,9 @@
  * 3D Foundation Project
  * Copyright 2025 Smithsonian Institution
  *
+ * Copyright 2026 SmithIIIF Team
+ * * Add styling for ManifestPropMenu (.sv-manifest-prop-menu)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -3590,6 +3593,32 @@ ff-tab-header label, ff-dock-panel-header label {
 }
 .sv-hover-dropdown.show > ul {
   display: inherit;
+}
+
+.sv-manifest-prop-menu {
+  width: 350px;
+  height: 450px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.sv-manifest-prop-menu .ff-fullsize {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.sv-manifest-prop-menu .sv-entry {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgb(26.5, 26.5, 26.5);
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.sv-manifest-prop-menu .sv-entry:hover {
+  background-color: rgba(0, 137, 191, 0.1);
+}
+.sv-manifest-prop-menu .sv-entry[selected] {
+  background-color: #0089bf;
+  color: #e8e8e8;
 }
 
 /*# sourceMappingURL=voyager-story.dev.css.map*/
