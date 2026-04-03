@@ -49,6 +49,9 @@ export function proxiedFetch(input: RequestInfo | URL, init?: RequestInit): Prom
         return Promise.reject(new Error("proxiedFetch called and proxyUrl not set"));
     }
     let url: string = input instanceof URL ? input.toString() : input instanceof Request ? input.url : input;
+    if(/^http:\/\/localhost(:\d+)?$/.test(url) || !url.endsWith(".glb")){//Don't send localhost reqs
+        return ogFetch(input, init);
+    }
     //Format for sending
     url = encodeURI(url);
     url = proxyUrl + url;

@@ -37,12 +37,27 @@ export default {
     }
 
     try {
+      // 1. Clone the incoming headers
+      const forwardHeaders = new Headers(request.headers);
+
+      // 2. Scrub the "Proxy-Specific" headers
+      const toDelete = [
+          "host", 
+          "origin", 
+          "referer", 
+          "cookie", 
+          "cf-ray", 
+          "cf-connecting-ip"
+      ];
+    
+      toDelete.forEach(header => forwardHeaders.delete(header));
+
       // 4. Fetch and Stream the Asset
       const response = await fetch(targetUrl);
 
       const proxyResponse = new Response(response.body, {
         status: response.status,
-        headers: new Headers(response.headers),
+        headers: forwardHeaders
       });
 
       proxyResponse.headers.set("Access-Control-Allow-Origin", origin);

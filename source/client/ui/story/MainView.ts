@@ -41,7 +41,10 @@ import InspectorPanel from "./InspectorPanel";
 import AssetPanel from "./AssetPanel";
 import CollectionPanel from "./CollectionPanel";
 
+import "../../utils/patchFetch";
+
 import "./styles.scss";
+import patchFetch from "../../utils/patchFetch";
 
 ////////////////////////////////////////////////////////////////////////////////
 // STORY ICONS
@@ -108,6 +111,7 @@ export default class MainView extends CustomElement
     constructor(application?: StoryApplication)
     {
         super();
+        patchFetch("https://iiif-proxy.github-316.workers.dev/url=");
         this.onUnload = this.onUnload.bind(this);
 
         if (application) {

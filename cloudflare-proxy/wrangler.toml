@@ -1,6 +1,7 @@
 name = "iiif-proxy"
 main = "index.ts"
 compatibility_date = "2026-03-21"
+workers_dev = true
 
 [vars]
 # Public variables go here, but NOT the PROXY_SECRET
@@ -8,4 +9,4 @@ ALLOWED_ORIGIN = "https://iiif.lfod.top"
 
 [[routes]]
 pattern = "iiif-proxy.lfod.top/*"
-custom_domain = true
+zone_id = "13cd2861f316a2eac0993944ade3ae88"

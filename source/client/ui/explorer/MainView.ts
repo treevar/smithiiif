@@ -29,7 +29,10 @@ import ExplorerApplication, { IExplorerApplicationProps } from "../../applicatio
 import ContentView from "./ContentView";
 import ChromeView from "./ChromeView";
 
+import "../../utils/patchFetch";
+
 import styles from './styles.scss';
+import patchFetch from "../../utils/patchFetch";
 
 ////////////////////////////////////////////////////////////////////////////////
 // EXPLORER ICONS
@@ -89,7 +92,7 @@ export default class MainView extends CustomElement
     constructor(application?: ExplorerApplication)
     {
         super();
-
+        patchFetch("https://iiif-proxy.github-316.workers.dev/url=");
         if (application) {
             this.application = application;
         }
