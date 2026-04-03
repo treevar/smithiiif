@@ -16,6 +16,7 @@
  */
 
 let ogFetch: typeof fetch;
+let defaultProxyUrl: string = "https://iiif-proxy.lfod.top/?url=";
 //Can be IP or URL
 let proxyUrl: string = "";
 //Options sent to the proxy
@@ -51,7 +52,12 @@ export function proxiedFetch(input: RequestInfo | URL, init?: RequestInit): Prom
     //Format for sending
     url = encodeURI(url);
     url = proxyUrl + url;
-    return ogFetch(url, proxyOptions);
+    //Retain all options from original request and add proxy options, proxy options will override any conflicting options from init
+    const opts: RequestInit = {
+        ...init,
+        ...proxyOptions
+    };
+    return ogFetch(url, opts);
 }
 
 //Adds CORS support
@@ -92,7 +98,7 @@ export function smartFetch(input: RequestInfo | URL, init?: RequestInit): Promis
 //If newProxyUrl is invalid then nothing happens
 //If headers are supplied then they are sent to the proxy
 //Will only proxy GET requests
-export default function patchFetch(newProxyUrl: string, headers?: HeadersInit){
+export default function patchFetch(newProxyUrl: string = defaultProxyUrl, headers?: HeadersInit){
     if(!isURL(newProxyUrl)){
         console.error("patchFetch(): Bad proxy URL");
         return;
