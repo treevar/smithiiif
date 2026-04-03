@@ -31,13 +31,27 @@ export default class CollectionPanel extends DocumentView
         return this.system.getMainComponent(CVTaskProvider);
     }
 
-    protected firstConnected()
+    protected connected()
     {
+        super.connected();
         this.classList.add("sv-panel", "sv-collection-panel");
+        this.activeDocument.ins.uploadedFileName.on("value", this.onFileNameChanged, this);
+    }
+
+    protected disconnected()
+    {
+        this.activeDocument.ins.uploadedFileName.off("value", this.onFileNameChanged, this);
+        super.disconnected();
+    }
+
+    protected onFileNameChanged() {
+        this.requestUpdate();
     }
 
     protected render()
     {
+        const fileName = this.activeDocument.ins.uploadedFileName.value;
+
         const languageManager = this.activeDocument.setup.language;
 
         const meta = this.activeDocument.meta;
@@ -59,7 +73,7 @@ export default class CollectionPanel extends DocumentView
             <sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>
             <div class="sv-indent">
                 <div class="sv-label">Title</div>
-                <ff-line-edit name="title" text=${this.activeDocument.ins.title.value || "Missing Title"} @change=${this.onTextEdit}></ff-line-edit>
+                <ff-line-edit name="title" text=${this.activeDocument.ins.title.value || fileName || "No File"} @change=${this.onTextEdit}></ff-line-edit>
                 <div class="sv-label">Intro</div>
                 <ff-text-edit name="intro" text=${this.activeDocument.ins.intro.value} @change=${this.onTextEdit}></ff-text-edit>
             </div>

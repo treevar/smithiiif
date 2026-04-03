@@ -155,9 +155,12 @@ export default class CVStoryApplication extends Component
                 download.json(json, fileName);
             }
 
+            // IIIF download only includes the manifest
+            // gets name from title, or defaults to iiif-manifest.json if no title is present in CVDocument
             const doc = this.system.getMainComponent(CVDocument);
             const title = doc.ins.title.value;
 
+            // If the IIIF manifest has changed, construct a new manifest
             if (ins.iiif.changed) {
                 const json = this.IIIFWriter.constructIIIFManifest(cvDocument);//console.log(json);
                 const fileName = title ? `${title}-manifest.json` : "iiif-manifest.json";

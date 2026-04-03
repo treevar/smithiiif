@@ -217,6 +217,7 @@ module.exports = function(env, argv)
         // loaders execute transforms on a per-file basis
         module: {
             rules: [
+                
                 {
                     // Raw text and shader files
                     test: /\.(txt|glsl|hlsl|frag|vert|fs|vs)$/,
@@ -235,7 +236,7 @@ module.exports = function(env, argv)
                     type: "asset/source",
                     issuer: {
                         //include: /source\/client\/ui\/explorer/     // currently only inlining explorer css
-                        and: [/source\/client\/ui\/explorer/]     // currently only inlining explorer css
+                        and: [/source[\\/]client[\\/]ui[\\/]explorer/]     // currently only inlining explorer css
                     }
                 },
                 {
@@ -248,7 +249,7 @@ module.exports = function(env, argv)
                     ],
                     type: "javascript/auto",
                     issuer: {
-                        not: [/source\/client\/ui\/explorer/]     // currently only inlining explorer css
+                        not: [/source[\\/]client[\\/]ui[\\/]explorer/]    // currently only inlining explorer css
                     }
                 },
                 {

@@ -15,6 +15,25 @@
  * limitations under the License.
  */
 
+//Importing from manifest
+// - Need to ident arrays from multilang props
+// - build object from manifest and insert using createFromObject
+// X Need to add support for adding values via createFromObject
+
+//Adding optional props
+// X baseProperties are the ONLY required fields (label)
+// - When jsonify we can check useing the baseProperties object if an object is required
+// X Additional task view/popout for selecting from predefined properties
+//   * Will be defined in a static map of key to object to be processed into ManifestProps
+// - CHECK, but every array property should have an add button to add new entries
+
+//Optional props to consider
+// provider - https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#provider
+// seeAlso - https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#seeAlso
+
+//Arrays need a seperate dictionary of object templates so we know what to insert when we add elems to the array
+// #arrayDefs: Dictionary<ManifestNode> = {}
+
 import { Dictionary } from "@ff/core/types";
 import Component from "@ff/graph/Component";
 import Property, { schemas } from "@ff/graph/Property";
@@ -30,149 +49,135 @@ export function isManifestProvider(obj: any): obj is Component & IManifestProvid
     return obj && obj.manifestProps instanceof ManifestProps;
 }
 
+export type ManifestNode = string | MultilangProp | { [key: string]: ManifestNode } | ManifestNode[] ;
+
 //Multilang property class, contains a key and a dictionary of language to value, with getter and setter for specific language
 //Only supports 1 value per language for now, but the iiif spec allows for multiple values for each lang
 //May not need to support multiple values for our use case, but something to keep in mind
 //  Figuring out how to implement with UI will be hardest part 
 export class MultilangProp{
     static readonly typeName: string = "MultilangProp";
+    readonly isMultiLang: boolean = true;
     //Default text used if iiifJSONString is called and there are no values
     static readonly defaultText: string = "NONE";
-    #key: string; //Key of property
-    #values: Dictionary<string[]>; //Dictionary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
+    private values: Dictionary<string[]>; //Dictionary of language to value (this is an array so when we jsonify it is setup properly for the manifest)
     
-    constructor(key: string) {
-        this.#key = key;
-        this.#values = {};
+    constructor(startVals: Dictionary<string[]> | string = null) {
+        if(startVals === null){
+            this.values = {};
+        }
+        else if(typeof startVals === 'object'){
+            //Copy as its pass by ref
+            this.values = structuredClone(startVals);
+        }
+        else{ //String (default val for english)
+            this.values = {"en":[startVals]};
+        }
     }
     //Get value for a specific language
     get(lang: TLanguageType): string {
-        if(!this.#values[lang] || !this.#values[lang][0]){
+        const langStr = lang.toLowerCase();
+        if(!this.values[langStr] || !this.values[langStr][0]){
             return "";
         }
-        return this.#values[lang][0];
+        return this.values[langStr][0];
     }
     //Set value for specific lang
     set(lang: TLanguageType, value: string) {
+        const langStr = lang.toLowerCase();
         //Lang array doesnt exist
-        if(!this.#values[lang]) {
-            this.#values[lang] = [];
+        if(!this.values[langStr]) {
+            this.values[langStr] = [];
         }
         //First elem doesnt exist
-        if(!this.#values[lang][0]){
-            this.#values[lang].push(value);
+        if(!this.values[langStr][0]){
+            this.values[langStr].push(value);
         }
         else{
-            this.#values[lang][0] = value;
+            this.values[langStr][0] = value;
         }
     }
 
-    get key(): string{ return this.#key; }
-    get langs(): string[] { return Object.keys(this.#values); }
+    //Returns array of lang keys
+    //Keys are added if the corresponsing lang has a value set
+    get langs(): string[] {
+        let keys: string[] = [];
+        Object.entries(this.values).forEach(([key, value]) => {
+            if(value && value.length > 0){
+                keys.push(key);
+            }
+        });
+        return keys;
+    }
 
     hasLang(lang: TLanguageType): boolean {
-        return !!this.#values[lang];
+        const langStr = lang.toLowerCase();
+        return this.values[langStr] && this.values[langStr].length > 0;
     }
-    //Convert to a json string that can be directly added to a iiif manifest
+    
     //JSON Object containing a key for each langauge specified, with the value being a string array
-    //incKey (Include Key): If true then the key is included in the JSON, ie "foo": {"EN":["bar"]}
-    //                      If false then just the data is returned, ie {"EN":["bar"]}
     //defIfEmpty (Default if empty): if true and we have no values then the none key is returned with the defaultText
     //                               If false and no values then we return an empty object
-    iiifJSONString(incKey: boolean = false, defIfEmpty: boolean = true): string {
-        const keys = this.langs;
-        let out = "";
+    toJSON(/*defIfEmpty: boolean = true*/){
+        //const keys = this.langs;
 
-        if(incKey){
-            out += `"${this.key}: "`
+        /*if(keys.length == 0 && defIfEmpty){ //No label set
+            return{
+                "none": [MultilangProp.defaultText]
+            };
         }
-        if(keys.length == 0 && defIfEmpty){ //No label set
-            out += `{\n\t"none": ["${MultilangProp.defaultText}"]\n}`;
+        else*/{
+            return this.values;
         }
-        else{
-            out += JSON.stringify(this.#values);
-        }
-
-        return out;
     }
 };
 
 //Contains all manifest properties with multilanguage support
 export class ManifestProps{
     static readonly typeName: string = "ManifestProps";
-    //Default keys added to every manifest object
-    static readonly baseKeys = ["label", "summary", "rights", "requiredStatement"];
-    //Key/value stores
-    #base: Dictionary<MultilangProp> = {};
-    #extra: Dictionary<MultilangProp> = {};
+    //Default props added to every manifest object
+    static readonly baseProperties: Dictionary<ManifestNode> = {
+        "label": new MultilangProp()
+    }
+
+    static readonly optionalProperties: Dictionary<ManifestNode> = {
+        "summary": new MultilangProp(),
+        "requiredStatement": {
+            "label": new MultilangProp(),
+            "value": new MultilangProp()
+        },
+        "rights": ""
+        //ANY array gets parsed into an array of ManifestProps
+        //"metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
+    };
+
+    #data: Dictionary<ManifestNode> = {};
+    #optionals: Dictionary<ManifestNode> = {};
 
     #uiProperties: Dictionary<Property> = {}; //Used for interfacing with UI
     #langManager: CVLanguageManager = null;
 
-    constructor(){
+    constructor(optionalProps: Dictionary<ManifestNode> = ManifestProps.optionalProperties){
+        //Set optionals
+        this.#addPropsFromObject(structuredClone(optionalProps), this.#optionals, "", false, true);
         //Add base properties
-        const addToBase: boolean = true;
-        ManifestProps.baseKeys.forEach((key) => {
-            this.#addNewKey(key, addToBase);
-        });
-        //this.fillPropertyValues();
+        this.createFromObject(ManifestProps.baseProperties);
     }
-    //Get a property by key, check extra first then base, return null if not found
-    get(key: string): MultilangProp | null {
-        if(this.#extra[key]) {
-            return this.#extra[key];
-        }
-        if(this.#base[key]) {
-            return this.#base[key];
-        }
-        return null;
+    //Get a property by key, return null if not found
+    get(key: string): ManifestNode | null {
+        return this.#resolvePath(key);
     }
-    //Set property value for a specific language, if property doesn't exist create it in extra
-    set(key: string, value: string, lang: TLanguageType){
-        
-        if(this.#extra[key]){
-            this.#extra[key].set(lang, value);
-        }
-        else if(this.#base[key]){
-            this.#base[key].set(lang, value);
-        }
-        else {
-            const prop = this.add(key);
-            prop.set(lang, value);
-        }
-    }
-    //Adds property to extra if it doesnt exist
-    add(key: string): MultilangProp{
-        const existing = this.get(key);
-        if(existing) {
-            return existing;
-        }
-        return this.#addNewKey(key);
-    }
-    //Adds multiple properties to extra if they dont exist
-    addMulti(keys: string[]){
-        keys.forEach(key => this.add(key));
-    }
-    //Returns whether the property exists in either base or extra
+    //Returns whether the property exists
     has(key: string): boolean {
         return !!this.get(key);
     }
-    //Return dictionary of all properties, with extra properties overriding base properties
-    get all(): Dictionary<MultilangProp> {
-        // Start with base, then spread extra over it so extra overrides base
-        return { ...this.#base, ...this.#extra };
+    //Return dictionary of all properties
+    get data(): Dictionary<ManifestNode> {
+        return this.#data;
     }
     //Return array of all property keys
     get keys(): string[] {
-        return Object.keys(this.all);
-    }
-
-    get baseKeys(): string[] {
-        return Object.keys(this.#base);
-    }
-
-    get extraKeys(): string[] {
-        return Object.keys(this.#extra);
+        return Object.keys(this.data);
     }
 
     getUIProperty(key: string): Property | null{
@@ -193,58 +198,222 @@ export class ManifestProps{
         return this.#langManager;
     }
 
-    get properties(): Dictionary<Property> {  
+    get uiProperties(): Dictionary<Property> {  
         return this.#uiProperties;
+    }
+
+    get optionals(): Dictionary<ManifestNode> {
+        return this.#optionals;
     }
 
     //Fill UI Properties with the current language's value
     //If langManager wasnt set before calling then it defaults to english
     fillPropertyValues = () => {
-        const lang = this.langManager?.codeString() ?? "EN";
+        const lang = this.#getCurLang();
         
-        Object.entries(this.properties).forEach(([key, prop]) => {
-            if(prop) {
-                const val = this.get(key)?.get(lang);
-                
-                prop.setValue(val);
-                
+        Object.entries(this.uiProperties).forEach(([path, prop]) => {
+            const node = this.#resolvePath(path);
+            
+            if (node instanceof MultilangProp) {
+                prop.setValue(node.get(lang));
+            } 
+            else if (typeof node === 'string') {
+                prop.setValue(node);
+            }
+        });
+    };
+
+    //Calls structured clone to ensure the data isnt being shared across instances
+    createFromObject(obj: ManifestNode, clone: boolean = true, copyData: boolean = false){
+        const addingObj = clone ? structuredClone(obj) : obj;
+        this.#addPropsFromObject(addingObj, this.#data, "", true, copyData);
+    }
+
+    serialize(){
+        return JSON.stringify(this.#data);
+    }
+
+    removeProp(key: string){
+        if(key.indexOf('.') == -1){ //Root
+            
+        }
+    }
+
+    #addPropsFromObject(obj: ManifestNode, parent: ManifestNode = this.#data, curPath: string = "", createUiProps: boolean = false, loadData: boolean = false) {
+        createUiProps = parent === this.#data || createUiProps;
+        Object.entries(obj).forEach(([key, value]) => {
+            // Build the current path
+            const thisPath = curPath.length === 0 ? key : `${curPath}.${key}`;
+            
+            // Skip nulls or undefined
+            if (value === null || value === undefined) return;
+
+            // Add root to data registry if it doesnt exist
+            if (curPath === "") {
+                if(!parent[key]){
+                    parent[key] = value;
+                }
+            }
+            
+
+            if (Array.isArray(value)) {
+                // Recurse into array
+                value.forEach((item, index) => {
+                    this.#addPropsFromObject(item, parent[key][index], `${thisPath}.${index}`, createUiProps, loadData);
+                });
+            } 
+            else if (typeof value === 'object' && !value.isMultiLang) {
+                // Recurse into nested object
+                this.#addPropsFromObject(value, parent[key], thisPath, createUiProps, loadData);
+            } 
+            else {
+                // Leaf node: Bind to UI
+                if(!this.#uiProperties[thisPath]){
+                    console.log(`adding path '${thisPath}'`);
+                    //Send reference to internal data for easy updating
+                    if(value.isMultiLang === true){
+                        if(loadData){
+                            parent[key] = Object.assign(new MultilangProp(), value); //Structured clone will clone these as plain objects
+                        }
+                        else{
+                            parent[key] = new MultilangProp();
+                        }
+
+                        if(createUiProps){
+                            this.#addMultiLangUIProperty(thisPath, parent[key]);
+                        }
+                    }
+                    else{
+                        if(loadData){
+                            console.log(`adding primitive "${key}": "${value}"`);
+                            parent[key] = value;
+                        }
+                        if(createUiProps){
+                            this.#addPrimitiveUIProperty(thisPath, parent, key);
+                        }
+                    }
+                }
             }
         });
     }
 
-    #addNewKey(key: string, base: boolean = false): MultilangProp {
-        let prop = new MultilangProp(key);
-        if(base) {
-            this.#base[key] = prop;
-        } else {
-            this.#extra[key] = prop;
+    #resolvePath(path: string): ManifestNode | null {
+        let keys = path.split('.');
+        if(keys === null){
+            keys = [path];
         }
-        this.#addUIProperty(key);
-        return prop;
+        if(keys.length === 0){ return null; }
+
+        let current = this.#data[keys[0]];
+
+        for (let i = 1; i < keys.length; ++i) {
+            const key = keys[i];
+            if (current === null || current === undefined){ return null; }
+            current = current[key];
+        }
+        return current;
     }
 
-    #addUIProperty(key: string){
+    #addMultiLangUIProperty(key: string, node: MultilangProp){
         const uiProp = new Property(key, schemas.String, true);
+        const lang = this.#getCurLang();
+        const curLangVal = node.get(lang);
+        if(curLangVal && curLangVal.length > 0){
+            uiProp.setValue(curLangVal);
+        }
         uiProp.on("value", (newValue: string) => {
-            this.#onPropertyChanged(key, newValue);
-        });
+            this.#onMultiLangPropertyChanged(node, newValue);
+        }, this);
         this.#uiProperties[key] = uiProp;
     }
 
-    //Updates internal value when UI property value is changed
-    #onPropertyChanged(key: string, value: string){
-        const prop = this.get(key);
-        if(!prop){ //Bad key
-            console.log(`ManifestProps.#onPropertyChanged(): Bad key '${key}'`);
+    //Primitives are passed by value not ref
+    //So we pass the parent node with the key to access the primitive
+    #addPrimitiveUIProperty(fullKey: string, parent: ManifestNode, parentKey: string){
+        const uiProp = new Property(fullKey, schemas.String, true);
+        const value = parent[parentKey];
+        if(value && (value as string).length > 0){
+            uiProp.setValue(value);
+        }
+        uiProp.on("value", (newValue: string) => {
+            this.#onPrimitivePropertyChanged(parent, parentKey, newValue);
+        }, this);
+        this.#uiProperties[fullKey] = uiProp;
+    }
+
+    //Removes a property from data
+    //Assuming key is valid
+    #rmProperty(key: string){
+        this.#rmUICallbacks(key);
+
+        const endParentIdx = key.lastIndexOf('.');
+
+        let parentKey = endParentIdx !== -1 ? key.slice(0, endParentIdx) : "";
+        let childKey = endParentIdx !== -1 ? key.slice(endParentIdx+1) : key;
+
+        //If parentKey is empty then its a root node
+        const parent = parentKey.length !== 0 ? this.#resolvePath(parentKey) : this.#data as ManifestNode;
+        if(parent === null){ //This shouldnt happen
+            console.error(`ManifestProps.#rmProperty(): Error resolving parent key. parentKey: "${parentKey}", childKey: "${childKey}"`);
             return;
         }
-        const lang = this.#langManager?.codeString() ?? "EN";
+
+        //Need to update callbacks for elems after this as the index will shift 1 left
+        if(Array.isArray(parent[childKey])){
+
+        }
+
+        delete parent[childKey];
+    }
+
+    //Removes all callabacks of type 'value' from the property
+    //Assuming key is valid
+    #rmUICallbacks(key: string){
+        let node = this.#resolvePath(key);
+        //if(node === null){ return; } //Bad key
+        if(Array.isArray(node)){
+            for(let i = 0; i < node.length; ++i){
+                this.#rmUICallbacks(key + `.${i}`);
+            }
+        }
+        else if(typeof node === 'object' && !(node instanceof MultilangProp)){ //Has children
+            Object.keys(node).forEach((childKey) => {
+                this.#rmUICallbacks(key + `.${childKey}`);
+            });
+        }
+        else{
+            let uiProp = this.getUIProperty(key);
+            uiProp?.off("value", null, this);
+        }
+    }
+
+    //Updates internal value when UI property value is changed
+    #onMultiLangPropertyChanged(node: MultilangProp, value: string){
+        if(!node){ //Bad node
+            console.log(`ManifestProps.#onMultiLangPropertyChanged(): Bad node`);
+            return;
+        }
+        const lang = this.#getCurLang();
         
         //Only update if value changed
         //Prevents event storm
-        if(prop.get(lang) !== value){
+        if(node.get(lang) !== value){
             //console.log("Action: Save", { key, lang, value });
-            prop.set(lang, value);
+            node.set(lang, value);
         }
+    }
+
+    #onPrimitivePropertyChanged(parent: ManifestNode, key: string, value: string){
+        if(!parent || parent[key] === null || parent[key] === undefined){ //Bad node
+            console.log(`ManifestProps.#onPrimitivePropertyChanged(): Bad parent/key Key: ${key}`);
+            return;
+        }
+        if(parent[key] !== value){
+            parent[key] = value;
+        }
+    }
+
+    #getCurLang(): TLanguageType{
+        return this.#langManager?.codeString() ?? "EN";
     }
 };
