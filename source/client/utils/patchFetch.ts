@@ -29,7 +29,7 @@ let proxyOptions: RequestInit = {
 //403: Forbidden
 //404: Not Found (used if server operator doesnt want to expose files they have)
 // *Will add load to proxy as we can't tell if the resource exist or not
-const proxyHttpCodes = [401, 403, 404];
+const proxyHttpCodes = [401, 403];
 
 //Returns whether the url is valid
 export function isURL(url: string){
