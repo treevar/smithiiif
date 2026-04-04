@@ -105,6 +105,10 @@ export default class TaskBar extends SystemView
             <div class="sv-divider"></div>
             <div class="sv-spacer"></div>
             <div class="sv-divider"></div>
+            <div class="ff-flex-row" style="min-width:100px">
+            <ff-button text="Import" icon="upload" @click=${()=>{alert("import menu here")}}></ff-button>
+            </div>
+            <div class="sv-divider"></div>
             <div class="ff-flex-row ff-group" style="min-width:100px">
                 ${1 < saveOptions.length? 
                     html`<ff-dropdown caret text="${saveName}" icon="save" @select=${this.onSelectSave} .items=${saveOptions}></ff-dropdown>`
