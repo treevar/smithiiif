@@ -16,7 +16,7 @@
  */
 
 let ogFetch: typeof fetch = window.fetch.bind(window);
-let defaultProxyUrl: string = "https://iiif-proxy.lfod.top/?url=";
+let defaultProxyUrl: string = "https://iiif-proxy.github-316.workers.dev/?url=";
 //Can be IP or URL
 let proxyUrl: string = "";
 //Options sent to the proxy

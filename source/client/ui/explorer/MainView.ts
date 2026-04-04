@@ -92,7 +92,7 @@ export default class MainView extends CustomElement
     constructor(application?: ExplorerApplication)
     {
         super();
-        patchFetch("https://iiif-proxy.github-316.workers.dev/?url=");
+        patchFetch();
         if (application) {
             this.application = application;
         }
