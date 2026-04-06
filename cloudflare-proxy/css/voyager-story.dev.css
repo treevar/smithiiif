@@ -3621,4 +3621,37 @@ ff-tab-header label, ff-dock-panel-header label {
   color: #e8e8e8;
 }
 
+.sv-url-import-menu {
+  min-width: 600px;
+  max-width: 100%;
+  width: max-content;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+.sv-url-import-menu .main-content {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 12px;
+  align-items: center;
+}
+.sv-url-import-menu .ff-label {
+  padding-right: 6px;
+}
+.sv-url-import-menu .ff-input {
+  width: 400px;
+  background-color: rgb(26.5, 26.5, 26.5);
+  color: #e8e8e8;
+  border: 1px solid rgba(204, 173, 82, 0.4);
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 0.95em;
+}
+.sv-url-import-menu .ff-input:focus {
+  outline: none;
+  border-color: #ccad52;
+  box-shadow: 0 0 0 1px rgba(204, 173, 82, 0.6);
+}
+
 /*# sourceMappingURL=voyager-story.dev.css.map*/
