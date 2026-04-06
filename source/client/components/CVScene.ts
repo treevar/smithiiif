@@ -35,6 +35,7 @@ import { CLight } from "./lights/CVLight";
 import CDirectionalLight from "@ff/scene/components/CDirectionalLight";
 import CAmbientLight from "@ff/scene/components/CAmbientLight";
 import CHemisphereLight from "@ff/scene/components/CHemisphereLight";
+import { IManifestProvider, ManifestProps } from "client/utils/ManifestProps";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -55,7 +56,7 @@ function light_has_distance(l :CLight): l is (CLight & {ins: {distance: Property
  *  * ### Events
  * - *"bounding-box*" - emitted after the scene's model bounding box changed.
  */
-export default class CVScene extends CVNode
+export default class CVScene extends CVNode implements IManifestProvider
 {
     static readonly typeName: string = "CVScene";
 
@@ -78,6 +79,7 @@ export default class CVScene extends CVNode
     ins = this.addInputs<CVNode, typeof CVScene.ins>(CVScene.ins);
     outs = this.addOutputs<CVNode, typeof CVScene.outs>(CVScene.outs);
 
+    readonly manifestProps = new ManifestProps();
 
     get settingProperties() {
         return null;
