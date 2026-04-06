@@ -34,6 +34,8 @@ import CVSetup from "client/components/CVSetup";
 import URLImportMenu, { DataType } from "./URLImportMenu";
 import CVDocumentProvider from "client/components/CVDocumentProvider";
 import { EUnitType } from "client/schema/document";
+import MainView from "./MainView";
+import Notification from "client/../../libs/ff-ui/source/Notification";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,6 +166,7 @@ export default class TaskBar extends SystemView
     protected onSelectImport(event: {detail: {item: IMenuItem}}){
         const assestType: string = event.detail.item.name;
         const mainView = document.getElementsByTagName('voyager-story')[0] as HTMLElement;
+        const explorer = (document.getElementsByTagName('voyager-story')[0] as MainView).app.explorer;
         URLImportMenu.show(mainView, assestType as DataType).then((url) => {
             const activeDoc = this.system.getMainComponent(CVDocumentProvider).activeComponent;
             if(!activeDoc){
@@ -174,15 +177,16 @@ export default class TaskBar extends SystemView
             switch(assestType){
                 case "model":
                     // Handle model import
-                    const newModel = activeDoc.appendModel(url);
-                    newModel.ins.localUnits.setValue(EUnitType.cm);
-
-                    newModel.node.name = "Model";
-                    newModel.ins.name.setValue(newModel.node.name);
-
+                    this.assetReader.getText(url)       // make sure we have a valid model path
+                    .then(() => {
+                        explorer.loadModel(url, "medium");
+                    })
+                    .catch(error => Notification.show(`Bad Model Path: ${error.message}`, "error"));
                     break;
                 case "manifest":
                     // Handle manifest import
+                    explorer.loadDocument(url, undefined, "medium")
+                        .catch(error => Notification.show(`Failed to load document: ${error.message}`, "error"));
                     break;
                 default:
                     console.warn("Unhandled import type: ", assestType);
