@@ -3,6 +3,7 @@
  * Copyright 2025 Smithsonian Institution
  * 
  * Copyright 2026 SmithIIIF Team
+ * * Add IIIF icon
  * * Patch fetch to add CORS support
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
