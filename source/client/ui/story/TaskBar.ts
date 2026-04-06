@@ -36,6 +36,7 @@ import CVDocumentProvider from "client/components/CVDocumentProvider";
 import { EUnitType } from "client/schema/document";
 import MainView from "./MainView";
 import Notification from "client/../../libs/ff-ui/source/Notification";
+import { verifyContentType } from "client/utils/patchFetch";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -167,24 +168,42 @@ export default class TaskBar extends SystemView
         const assestType: string = event.detail.item.name;
         const mainView = document.getElementsByTagName('voyager-story')[0] as HTMLElement;
         const explorer = (document.getElementsByTagName('voyager-story')[0] as MainView).app.explorer;
+        const activeDoc = this.system.getMainComponent(CVDocumentProvider).activeComponent;
+        if(!activeDoc){
+            console.warn("No active document to import into.");
+            Notification.show("No active document to import into.", "warning");
+            return;
+        }
         URLImportMenu.show(mainView, assestType as DataType).then((url) => {
-            const activeDoc = this.system.getMainComponent(CVDocumentProvider).activeComponent;
-            if(!activeDoc){
-                console.warn("No active document to import into.");
-                return;
-            }
-
             switch(assestType){
                 case "model":
                     // Handle model import
-                    this.assetReader.getText(url)       // make sure we have a valid model path
-                    .then(() => {
-                        explorer.loadModel(url, "medium");
-                    })
-                    .catch(error => Notification.show(`Bad Model Path: ${error.message}`, "error"));
+                    verifyContentType(url, "application/octet-stream").then(isValid => {
+                        if(isValid){
+                            explorer.loadModel(url, "medium");
+                        }
+                        else{
+                            throw new Error("URL does not point to a valid model resource.");
+                        }
+                    }).catch(err => {
+                        console.warn(`Failed to fetch model: ${err.message}`);
+                        Notification.show(`Failed to fetch model: ${err.message}`, "error");
+                    });
                     break;
                 case "manifest":
                     // Handle manifest import
+                    verifyContentType(url, "text").then(isValid => {
+                        if(isValid){
+                            explorer.loadDocument(url, undefined, "medium")
+                        }
+                        else{
+                            throw new Error("URL does not point to a valid JSON resource.");
+                        }
+                    }).catch(err => {
+                        console.warn(`Failed to fetch manifest: ${err.message}`);
+                        Notification.show(`Failed to fetch manifest: ${err.message}`, "error");
+                    });
+                    return;
                     explorer.loadDocument(url, undefined, "medium")
                         .catch(error => Notification.show(`Failed to load document: ${error.message}`, "error"));
                     break;
@@ -192,16 +211,6 @@ export default class TaskBar extends SystemView
                     console.warn("Unhandled import type: ", assestType);
             }
         }).catch((err) => {});
-        /*switch(name){
-            case "model":
-                alert("model");
-                break;
-            case "manifest":
-                alert("manifest");
-                break;
-            default:
-                console.warn("Unhandled import type: ", name);
-        }*/
     }
 
     protected onClickExit()

@@ -42,6 +42,22 @@ export function isURL(url: string){
     }
 }
 
+export async function verifyContentType(url: string, match: string): Promise<boolean> {
+    try {
+        const res = await fetch(url);
+        
+        if (!res.ok) return false;
+
+        const contentType = res.headers.get("Content-Type");
+        // Using optional chaining and lowercase for defensive comparison
+        return !!(contentType?.toLowerCase().includes(match.toLowerCase()));
+    } catch (err) {
+        // This catches DNS failures or Proxy timeouts
+        console.error("ContentType Verification Failed:", err);
+        return false;
+    }
+}
+
 //Adds CORS support
 //Process the request through our proxy
 export function proxiedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>{
