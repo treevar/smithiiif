@@ -4,7 +4,7 @@
  * * ImportMenu.ts
  * 
  * Copyright 2026 SmithIIIF Team
- * * Modified for use in importing via a url
+ * * Modified for use in importing assets via a url
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
