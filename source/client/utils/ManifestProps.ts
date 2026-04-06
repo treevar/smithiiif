@@ -153,15 +153,18 @@ export class ManifestProps{
     };
 
     #data: Dictionary<ManifestNode> = {};
+    #base: Dictionary<ManifestNode> = {};
     #optionals: Dictionary<ManifestNode> = {};
 
     #uiProperties: Dictionary<Property> = {}; //Used for interfacing with UI
     #langManager: CVLanguageManager = null;
 
-    constructor(optionalProps: Dictionary<ManifestNode> = ManifestProps.optionalProperties){
+    constructor(baseProps: Dictionary<ManifestNode> = ManifestProps.baseProperties, optionalProps: Dictionary<ManifestNode> = ManifestProps.optionalProperties){
         //Set optionals
         this.#addPropsFromObject(structuredClone(optionalProps), this.#optionals, "", false, true);
         //Add base properties
+        this.#addPropsFromObject(structuredClone(baseProps), this.#base, "", false, true);
+        //Add base props to data
         this.createFromObject(ManifestProps.baseProperties);
     }
     //Get a property by key, return null if not found
@@ -179,6 +182,15 @@ export class ManifestProps{
     //Return array of all root property keys
     get keys(): string[] {
         return Object.keys(this.data);
+    }
+    //Returns whether every base property has a value set
+    allBasePropsSet(): boolean{
+        const values = Object.values(this.#base);
+        if(!values || values.length === 0){ return true; }
+        for(let i = 0; i < values.length; ++i){
+            if(!ManifestProps.nodeHasValue(values[i])){ return false; }
+        }
+        return true;
     }
 
     getUIProperty(key: string): Property | null{
@@ -378,7 +390,7 @@ export class ManifestProps{
     }
 
     #addMultiLangUIProperty(key: string, node: MultilangProp){
-        const uiProp = new Property(key, schemas.String, true);
+        const uiProp = new Property(`${key} [ML]`, schemas.String, true);
         const lang = this.#getCurLang();
         const curLangVal = node.get(lang);
         if(curLangVal && curLangVal.length > 0){
