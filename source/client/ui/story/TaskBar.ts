@@ -28,6 +28,9 @@ import CVAssetReader from "../../components/CVAssetReader";
 import CVLanguageManager from "client/components/CVLanguageManager";
 import { IMenuItem } from "@ff/ui/Menu";
 import CVSetup from "client/components/CVSetup";
+import URLImportMenu, { DataType } from "./URLImportMenu";
+import CVDocumentProvider from "client/components/CVDocumentProvider";
+import { EUnitType } from "client/schema/document";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -82,9 +85,14 @@ export default class TaskBar extends SystemView
         const exitButtonVisible = taskMode !== ETaskMode.Standalone;
         const languageManager = this.language;
         const saveName = languageManager.getUILocalizedString(taskMode !== ETaskMode.Standalone ? "Save" : "Download");
+        const importName = languageManager.getLocalizedString("Import");
 
         const saveOptions :IMenuItem[] = [
             {name: "save", icon: "save", text: saveName}
+        ];
+        const urlImportOptions: IMenuItem[] = [
+            {name: "model", icon: "cube", text: languageManager.getLocalizedString("Model")},
+            {name: "manifest", icon: "article", text: languageManager.getLocalizedString("Manifest")}
         ];
         if(taskMode !== ETaskMode.Standalone){
             saveOptions.push(
@@ -106,7 +114,10 @@ export default class TaskBar extends SystemView
             <div class="sv-spacer"></div>
             <div class="sv-divider"></div>
             <div class="ff-flex-row" style="min-width:100px">
-            <ff-button text="Import" icon="upload" @click=${()=>{alert("import menu here")}}></ff-button>
+                ${1 < urlImportOptions.length? 
+                    html`<ff-dropdown caret text="${importName}" icon="upload" @select=${this.onSelectImport} .items=${urlImportOptions}></ff-dropdown>`
+                  : html`<ff-button text="${urlImportOptions[0].text}" icon="${urlImportOptions[0].icon}" @click=${()=>{this.onSelectImport(new CustomEvent("select", {detail: {item: urlImportOptions[0]}}))}}></ff-button>`
+                }
             </div>
             <div class="sv-divider"></div>
             <div class="ff-flex-row ff-group" style="min-width:100px">
@@ -145,6 +156,45 @@ export default class TaskBar extends SystemView
             default:
                 console.warn("Unhandled save method : ", event.detail.item.name);
         }
+    }
+
+    protected onSelectImport(event: {detail: {item: IMenuItem}}){
+        const assestType: string = event.detail.item.name;
+        const mainView = document.getElementsByTagName('voyager-story')[0] as HTMLElement;
+        URLImportMenu.show(mainView, assestType as DataType).then((url) => {
+            const activeDoc = this.system.getMainComponent(CVDocumentProvider).activeComponent;
+            if(!activeDoc){
+                console.warn("No active document to import into.");
+                return;
+            }
+
+            switch(assestType){
+                case "model":
+                    // Handle model import
+                    const newModel = activeDoc.appendModel(url);
+                    newModel.ins.localUnits.setValue(EUnitType.cm);
+
+                    newModel.node.name = "Model";
+                    newModel.ins.name.setValue(newModel.node.name);
+
+                    break;
+                case "manifest":
+                    // Handle manifest import
+                    break;
+                default:
+                    console.warn("Unhandled import type: ", assestType);
+            }
+        }).catch((err) => {});
+        /*switch(name){
+            case "model":
+                alert("model");
+                break;
+            case "manifest":
+                alert("manifest");
+                break;
+            default:
+                console.warn("Unhandled import type: ", name);
+        }*/
     }
 
     protected onClickExit()

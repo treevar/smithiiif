@@ -832,3 +832,40 @@ $color-component-meta-light: #d9d998;
     }
   }
 }
+
+.sv-url-import-menu {
+  min-width: 600px;
+  max-width: 100%;
+  width: max-content;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .ff-label{
+    padding-right: 6px;
+  }
+
+  .ff-input {
+    width: 400px;
+    background-color: common.$color-background-darker;
+    color: common.$color-text-light;
+    border: 1px solid rgba($color-component-light-light, 0.4);
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 0.95em;
+
+    &:focus {
+      outline: none;
+      border-color: $color-component-light-light;
+      box-shadow: 0 0 0 1px rgba($color-component-light-light, 0.6);
+    }
+  }
+}
