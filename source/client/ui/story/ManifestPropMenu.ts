@@ -146,4 +146,16 @@ export default class ManifestPropMenu extends Popup
         });
         return props;
     }
+
+    protected getDataString(node: ManifestNode): string{
+        let out = "";
+        if(Array.isArray(node)){
+            out += "["
+            node.forEach((val) => {
+                out += `${this.getDataString(val)},`;
+            });
+            out += "]";
+        }
+        return out;
+    }
 }
