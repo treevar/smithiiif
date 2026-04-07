@@ -22,7 +22,7 @@
 import Popup, { customElement, html } from "@ff/ui/Popup";
 
 import "@ff/ui/Button";
-import { ManifestNode, ManifestProps } from "client/utils/ManifestProps";
+import { ManifestNode, ManifestProps, MultilangProp } from "client/utils/ManifestProps";
 import { Dictionary } from "@ff/core/types";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ export default class ManifestPropMenu extends Popup
         e.stopPropagation();
 
         this.propKeySelection = key;
-        this.dataString = `"${key}": ${JSON.stringify(this.options[key])}`;
+        this.dataString = `"${key}": ${this.getDataString(this.options[key])}`;
         this.requestUpdate();
     }
 
@@ -150,11 +150,26 @@ export default class ManifestPropMenu extends Popup
     protected getDataString(node: ManifestNode): string{
         let out = "";
         if(Array.isArray(node)){
-            out += "["
-            node.forEach((val) => {
-                out += `${this.getDataString(val)},`;
-            });
-            out += "]";
+            out += `[${this.getDataString(node[0])}]`;
+        }
+        else if(typeof node === 'object'){
+            if(node instanceof MultilangProp){
+                out += "{Multilang}";
+            }
+            else{ //Object
+                const entries = Object.entries(node);
+                out += "{";
+                for(let i = 0; i < entries.length; ++i){
+                    out += `"${entries[i][0]}":${this.getDataString(entries[i][1])}`;
+                    if(i < entries.length-1){
+                        out += ",";
+                    }
+                }
+                out += "}";
+            }
+        }
+        else{
+            out += "string";
         }
         return out;
     }
