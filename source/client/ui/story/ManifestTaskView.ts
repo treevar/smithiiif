@@ -92,11 +92,13 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         nodes.forEach((node) => {
             node.manifestProps.setLangManager(languageManager);
         });
-        
+        const props = nodes[0].manifestProps;
+        const dataKeyCnt = Object.keys(props.data).length;
+        const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
         
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
-            ${this.createAddButton(nodes[0].manifestProps)}
+            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
         </div>`;
     }
 }

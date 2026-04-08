@@ -234,6 +234,10 @@ export class ManifestProps{
         return this.#optionals;
     }
 
+    get base(): Dictionary<ManifestNode>{
+        return this.#base;
+    }
+
     //Fill UI Properties with the current language's value
     //If langManager wasnt set before calling then it defaults to english
     fillPropertyValues = () => {
