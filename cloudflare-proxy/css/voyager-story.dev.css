@@ -3596,7 +3596,7 @@ ff-tab-header label, ff-dock-panel-header label {
 }
 
 .sv-manifest-prop-menu {
-  width: 350px;
+  width: 600px;
   height: 450px;
   max-height: 80vh;
   display: flex;
