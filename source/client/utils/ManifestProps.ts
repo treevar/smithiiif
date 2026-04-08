@@ -183,12 +183,23 @@ export class ManifestProps{
     get keys(): string[] {
         return Object.keys(this.data);
     }
+
+    isBaseProp(key: string): boolean{
+        const keyRoot = key.split('.')[0];
+        return !!this.#resolvePath(keyRoot, this.#base);
+    }
+
+    isOptionalProp(key: string): boolean{
+        const keyRoot = key.split('.')[0];
+        return !!this.#resolvePath(keyRoot, this.#optionals);
+    }
+
     //Returns whether every base property has a value set
     allBasePropsSet(): boolean{
-        const values = Object.values(this.#base);
-        if(!values || values.length === 0){ return true; }
-        for(let i = 0; i < values.length; ++i){
-            if(!ManifestProps.nodeHasValue(values[i])){ return false; }
+        const baseKeys = Object.keys(this.#base);
+        if(!baseKeys || baseKeys.length === 0){ return true; }
+        for(let i = 0; i < baseKeys.length; ++i){
+            if(!ManifestProps.nodeHasValue(this.#resolvePath(baseKeys[i]))){ return false; }
         }
         return true;
     }
@@ -375,11 +386,11 @@ export class ManifestProps{
         });
     }
 
-    #resolvePath(path: string): ManifestNode | null {
+    #resolvePath(path: string, data: Dictionary<ManifestNode> = this.#data): ManifestNode | null {
         let keys = path.split('.');
         if(keys.length === 0){ return null; }
 
-        let current = this.#data[keys[0]];
+        let current = data[keys[0]];
 
         for (let i = 1; i < keys.length; ++i) {
             const key = keys[i];
