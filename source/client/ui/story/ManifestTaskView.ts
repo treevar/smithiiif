@@ -25,7 +25,7 @@ import Property from "@ff/graph/Property";
 
 import "@ff/scene/ui/PropertyView";
 
-import { customElement, property, html } from "@ff/ui/CustomElement";
+import { customElement, property, html, TemplateResult } from "@ff/ui/CustomElement";
 import Tree from "@ff/ui/Tree";
 
 import { TaskView } from "client/components/CVTask";
@@ -112,6 +112,7 @@ interface ITreeNode
     text: string;
     classes: string;
     property?: Property;
+    buttons?: TemplateResult[]; //TemplateResult is what html`` returns
 }
 
 @customElement("sv-manifest-tree")
@@ -143,17 +144,22 @@ export class ManifestTree extends Tree<ITreeNode>
     protected renderNodeHeader(node: ITreeNode)
     {
         if (!node.property) {
-            return html`<div class="ff-text ff-label ff-ellipsis">${node.text}</div>`;
+            return html`<div class="ff-text ff-label ff-ellipsis">${node.text}</div>${node.buttons}`;
         }
 
         return html`<sv-property-view .property=${node.property}></sv-property-view>`;
 
     }
 
+    //Helper to create a button for adding elements to array properties
+    protected createAddElemButton(path: string, props: ManifestProps){
+        return html`<ff-button icon="create" class="iiif-add-btn" title="Add Elem" @click=${(e: MouseEvent) => {e.stopPropagation(); this.handleAddElem(path, props)}}></ff-button>`;
+    }
+
     protected createNodeTreeNode(node: Node): ITreeNode
     {
         const components: (Component & IManifestProvider)[] = node.components.getArray().filter(isManifestProvider);
-
+        //console.log(`${components[0].manifestProps.serialize()}`);
         return {
             id: node.id,
             text: node.displayName,
@@ -188,11 +194,28 @@ export class ManifestTree extends Tree<ITreeNode>
                     // If it's a leaf, look up the UI Property we registered earlier
                     property: isLeaf ? properties.getUIProperty(currentPath) : null,
                     // Recursively build children
-                    children: buildTree(value as ManifestNode, currentPath)
+                    children: buildTree(value as ManifestNode, currentPath),
+                    // If this is an array, add a button to add elements
+                    buttons: Array.isArray(value) ? [this.createAddElemButton(currentPath, properties)] : null
                 };
             });
         };
 
         return buildTree(data, "");
+    }
+
+    // Handle adding an element to an array property
+    protected handleAddElem(path: string, props: ManifestProps){
+        if(!path || path.length === 0){
+            console.warn("ManifestTree.handleAddElem(): path is empty");
+            return;
+        }
+        if(!props){
+            console.warn("ManifestTree.handleAddElem(): props is null");
+            return;
+        }
+
+        props.addElemToArray(path);
+        this.requestUpdate();
     }
 }

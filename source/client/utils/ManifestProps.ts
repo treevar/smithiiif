@@ -148,13 +148,17 @@ export class ManifestProps{
             "label": new MultilangProp(),
             "value": new MultilangProp()
         },
-        "rights": ""
-        //"metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
+        "rights": "",
+        "metadata": [{ //First elem is template for new elems added to the array
+            "label": new MultilangProp(),
+            "value": new MultilangProp()
+        }]
     };
 
     #data: Dictionary<ManifestNode> = {};
     #base: Dictionary<ManifestNode> = {};
     #optionals: Dictionary<ManifestNode> = {};
+    #arrayDefs: Dictionary<ManifestNode> = {}; //Used to store the template for adding new elems to array properties
 
     #uiProperties: Dictionary<Property> = {}; //Used for interfacing with UI
     #langManager: CVLanguageManager = null;
@@ -162,10 +166,13 @@ export class ManifestProps{
     constructor(baseProps: Dictionary<ManifestNode> = ManifestProps.baseProperties, optionalProps: Dictionary<ManifestNode> = ManifestProps.optionalProperties){
         //Set optionals
         this.#addPropsFromObject(structuredClone(optionalProps), this.#optionals, "", false, true);
-        //Add base properties
+        //Set base properties
         this.#addPropsFromObject(structuredClone(baseProps), this.#base, "", false, true);
         //Add base props to data
-        this.createFromObject(ManifestProps.baseProperties);
+        this.createFromObject(this.#base, false, false);
+        //Generate array definitions
+        this.#genArrayDefs();
+        //console.log(`araydef: ${JSON.stringify(this.#arrayDefs)}`);
     }
     //Get a property by key, return null if not found
     get(key: string): ManifestNode | null {
@@ -236,6 +243,10 @@ export class ManifestProps{
 
     get base(): Dictionary<ManifestNode>{
         return this.#base;
+    }
+
+    get arrayDefs(): Dictionary<ManifestNode>{
+        return this.#arrayDefs;
     }
 
     //Fill UI Properties with the current language's value
@@ -332,6 +343,29 @@ export class ManifestProps{
 
     }
 
+    //Adds a new element to the end of the array at the specified key, using the template stored in #arrayDefs
+    addElemToArray(key: string){
+        const arrayDef = this.#arrayDefs[key];
+        if(!arrayDef){
+            console.warn(`ManifestProps.addElemToArray(): no definition for array with key '${key}'`);
+            return;
+        }
+        const node = this.#resolvePath(key);
+        if(!node){
+            console.warn(`ManifestProps.addElemToArray(): could not resolve key '${key}'`);
+            return;
+        }
+        if(!Array.isArray(node)){
+            console.warn(`ManifestProps.addElemToArray(): key '${key}' does not point to an array`);
+            return;
+        }
+        //Add array elem
+        const nextIdx = node.length;
+        node.push({});
+        //Structured clone or all ui props point to same backend data
+        this.#addPropsFromObject(structuredClone(arrayDef), node[nextIdx], `${key}.${nextIdx}`, true, false);
+    }
+
     #addPropsFromObject(obj: ManifestNode, parent: ManifestNode = this.#data, curPath: string = "", createUiProps: boolean = false, loadData: boolean = false) {
         createUiProps = parent === this.#data || createUiProps;
         Object.entries(obj).forEach(([key, value]) => {
@@ -361,31 +395,51 @@ export class ManifestProps{
             } 
             else {
                 // Leaf node: Bind to UI
-                if(!this.#uiProperties[thisPath]){
-                    console.log(`adding path '${thisPath}'`);
-                    //Send reference to internal data for easy updating
-                    if(value.isMultiLang === true){
-                        if(loadData){
-                            parent[key] = Object.assign(new MultilangProp(), value); //Structured clone will clone these as plain objects
-                        }
-                        else{
-                            parent[key] = new MultilangProp();
-                        }
-
-                        if(createUiProps){
-                            this.#addMultiLangUIProperty(thisPath, parent[key]);
-                        }
+                console.log(`adding path '${thisPath}'`);
+                //Send reference to internal data for easy updating
+                if(value.isMultiLang === true){
+                    if(loadData){
+                        parent[key] = Object.assign(new MultilangProp(), value); //Structured clone will clone these as plain objects
                     }
                     else{
-                        if(loadData){
-                            console.log(`adding primitive "${key}": "${value}"`);
-                            parent[key] = value;
-                        }
-                        if(createUiProps){
-                            this.#addPrimitiveUIProperty(thisPath, parent, key);
-                        }
+                        parent[key] = new MultilangProp();
+                    }
+
+                    if(createUiProps && !this.#uiProperties[thisPath]){
+                        this.#addMultiLangUIProperty(thisPath, parent[key]);
                     }
                 }
+                else{
+                    console.log(`adding primitive "${key}": "${value}"`);
+                    if(loadData){
+                        parent[key] = value;
+                    }
+                    else{
+                        parent[key] = "";
+                    }
+                    if(createUiProps && !this.#uiProperties[thisPath]){
+                        this.#addPrimitiveUIProperty(thisPath, parent, key);
+                    }
+                }
+            }
+        });
+    }
+
+    //Generates the definitions for all array properties in both base and optional
+    //First elem is treated as the template for new elems added to the array
+    #genArrayDefs(){
+        const all = {
+            ...this.#base,
+            ...this.#optionals
+        };
+
+        Object.entries(all).forEach(([key, value]) => {
+            if(Array.isArray(value)){
+                if(value.length === 0){ return; }
+                console.log(`Adding array def for '${key}'`);
+                let addingObj = {};
+                addingObj[key] = value[0];
+                this.#addPropsFromObject(addingObj, this.#arrayDefs, "", false, false);
             }
         });
     }
@@ -405,7 +459,7 @@ export class ManifestProps{
     }
 
     #addMultiLangUIProperty(key: string, node: MultilangProp){
-        const uiProp = new Property(`${key} [ML]`, schemas.String, true);
+        const uiProp = new Property(`${key}`, schemas.String, true);
         const lang = this.#getCurLang();
         const curLangVal = node.get(lang);
         if(curLangVal && curLangVal.length > 0){
