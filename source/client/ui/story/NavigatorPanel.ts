@@ -20,7 +20,7 @@ import SystemView, { customElement, html } from "@ff/scene/ui/SystemView";
 import "./DocumentList";
 import "./NodeTree";
 
-import CVTaskProvider from "../../components/CVTaskProvider";
+import CVTaskProvider, { IActiveTaskEvent } from "../../components/CVTaskProvider";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,17 +39,26 @@ export default class NavigatorPanel extends SystemView
     protected connected()
     {
         this.taskProvider.ins.mode.on("value", this.performUpdate, this);
+        this.taskProvider.on<IActiveTaskEvent>("active-component", this.onUpdate, this);
     }
 
     protected disconnected()
     {
         this.taskProvider.ins.mode.off("value", this.performUpdate, this);
+        this.taskProvider.off<IActiveTaskEvent>("active-component", this.onUpdate, this);
     }
 
     protected render()
     {
         const system = this.system;
         const expertMode = this.taskProvider.expertMode;
+
+        let manifestSelected = false;
+
+        if(this.taskProvider.activeComponent){
+            console.log(this.taskProvider.activeComponent.text);
+            manifestSelected = this.taskProvider.activeComponent.text === "Manifest"
+        }
 
         const documentList = expertMode ? html`<div class="ff-splitter-section ff-flex-column" style="flex-basis: 30%">
             <div class="sv-panel-header">
@@ -67,7 +76,9 @@ export default class NavigatorPanel extends SystemView
                 <div class="sv-panel-header">
                     <ff-icon name="hierarchy"></ff-icon>
                     <div class="ff-text">Nodes</div>
-                </div>
+                    ${manifestSelected ? html`<ff-button icon="comment" text="Manifest Level" title="Manifest-Level-Edits"
+                    @click=${() => console.log("Test Click")}></ff-button>` : null} 
+                </div> 
                 <sv-node-tree class="ff-flex-item-stretch" .system=${system}></sv-node-tree>
             </div>`;
     }
