@@ -65,6 +65,32 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         }).catch(e => {});
     }
 
+    //handles the import of the Manifest json file
+    protected handleImportManifest(manifestProps: ManifestProps) {
+        const input = this.renderRoot.querySelector('#manifest-file-input') as HTMLInputElement;
+        input?.click();
+    }
+
+    //reads the json file 
+    protected onFileSelected(manifestProps: ManifestProps, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    file.text().then(text => {
+        try {
+            const json = JSON.parse(text);
+            manifestProps.importFromIIIFJSON(json);
+            this.requestUpdate();
+            const tree = this.renderRoot.querySelector('sv-manifest-tree');
+            if (tree) (tree as any).requestUpdate();
+        } catch(e) {
+            console.error("ManifestTaskView: Failed to parse manifest JSON", e);
+        }
+        input.value = '';
+    });
+}
+
     protected createAddButton(manifestProps: ManifestProps){
         return html`<ff-button icon="create" class="ff-button ff-control" title="Add Property" @click=${() => {this.handleAddProp(manifestProps)}}></ff-button>`;
     }
@@ -95,8 +121,14 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         
         
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <input type="file" id="manifest-file-input" accept=".json" style="display:none"
+                @change=${(e: Event) => this.onFileSelected(nodes[0].manifestProps, e)}>
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
-            ${this.createAddButton(nodes[0].manifestProps)}
+            <div class="sv-manifest-actions">
+                ${this.createAddButton(nodes[0].manifestProps)}
+                <ff-button icon="document" text="Import" class="ff-button ff-control" title="Import Manifest JSON"
+                    @click=${() => this.handleImportManifest(nodes[0].manifestProps)}></ff-button>
+            </div>
         </div>`;
     }
 }

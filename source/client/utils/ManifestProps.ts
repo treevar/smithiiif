@@ -151,6 +151,7 @@ export class ManifestProps{
         //"metadata": [] //Array of objects https://preview.iiif.io/api/prezi-4/presentation/4.0/model/#metadata
     };
 
+    
     #data: Dictionary<ManifestNode> = {};
     #optionals: Dictionary<ManifestNode> = {};
 
@@ -163,6 +164,16 @@ export class ManifestProps{
         //Add base properties
         this.createFromObject(ManifestProps.baseProperties);
     }
+
+    //import from IIIFJSON Manifest
+    importFromIIIFJSON(json: any){
+        if(!json || typeof json !== 'object') return;
+        
+        //add import functionality
+
+
+    }
+
     //Get a property by key, return null if not found
     get(key: string): ManifestNode | null {
         return this.#resolvePath(key);
