@@ -29,7 +29,7 @@ import { customElement, property, html, TemplateResult } from "@ff/ui/CustomElem
 import Tree from "@ff/ui/Tree";
 
 import { TaskView } from "client/components/CVTask";
-import MainView from "client/ui/explorer/MainView";
+import MainView from "client/ui/story/MainView";
 import NVNode from "client/nodes/NVNode";
 import { IManifestProvider, ManifestNode, ManifestProps, MultilangProp, isManifestProvider } from "client/utils/ManifestProps";
 import ManifestPropMenu from "./ManifestPropMenu";
@@ -77,6 +77,21 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         //const langSwitch = `<sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>`;
         //TODO: Add translations for this message VVVVV
         const defMsg = html`<div class="sv-placeholder">Please select a node that implements IManifestProvider.</div>`;
+        
+        const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;                
+        const manifestLevel = mainView.application.manifestLevelProps;
+        if(manifestLevel){
+            const manifestProps = mainView.application.manifestProps; 
+            const props = manifestProps;
+            const dataKeyCnt = Object.keys(props.data).length;
+            const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
+    
+            return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <sv-manifest-level-tree .props=${manifestProps}></sv-manifest-tree>
+            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
+        </div>`;
+        }
+        
         if(!this.activeNode) {
             return defMsg;
         }

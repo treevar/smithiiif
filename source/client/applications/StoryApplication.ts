@@ -41,6 +41,7 @@ import MainView from "../ui/story/MainView";
 import CVTaskProvider, { ETaskMode } from "../components/CVTaskProvider";
 import CVStandaloneFileManager from "client/components/CVStandaloneFileManager";
 import { ELanguageType } from "client/schema/common";
+import { ManifestProps } from "client/utils/ManifestProps";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,6 +70,8 @@ export default class StoryApplication
     readonly props: IStoryApplicationProps;
     readonly explorer: ExplorerApplication;
     readonly system: System;
+    public manifestProps = new ManifestProps();
+    public manifestLevelProps = false;
 
     protected get assetReader() {
         return this.system.getMainComponent(CVAssetReader);
