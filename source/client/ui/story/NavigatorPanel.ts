@@ -21,6 +21,9 @@ import "./DocumentList";
 import "./NodeTree";
 
 import CVTaskProvider, { IActiveTaskEvent } from "../../components/CVTaskProvider";
+import CVNodeProvider from "client/components/CVNodeProvider";
+import MainView from "./MainView";
+import ManifestTaskView from "./ManifestTaskView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +80,12 @@ export default class NavigatorPanel extends SystemView
                     <ff-icon name="hierarchy"></ff-icon>
                     <div class="ff-text">Nodes</div>
                     ${manifestSelected ? html`<ff-button icon="comment" text="Manifest Level" title="Manifest-Level-Edits"
-                    @click=${() => console.log("Test Click")}></ff-button>` : null} 
+                    @click=${() => {
+                        const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;
+                        mainView.application.manifestLevelProps = !mainView.application.manifestLevelProps;
+                        const manifestTV = document.getElementsByTagName('sv-manifest-task-view')[0] as ManifestTaskView;
+                        manifestTV.requestUpdate();
+                    }}></ff-button>` : null} 
                 </div> 
                 <sv-node-tree class="ff-flex-item-stretch" .system=${system}></sv-node-tree>
             </div>`;
