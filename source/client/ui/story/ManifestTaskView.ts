@@ -57,7 +57,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
             manifestProps.createFromObject(obj, false, true);
 
             this.requestUpdate();
-            const tree = this.renderRoot.querySelector('sv-manifest-tree');
+            const tree = this.renderRoot.querySelector('sv-manifest-tree') || this.renderRoot.querySelector('sv-manifest-level-tree');
             if (tree) {
                 (tree as any).requestUpdate();
             }
@@ -109,11 +109,12 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         if(manifestLevel){
             const manifestProps = mainView.application.manifestProps; 
             const props = manifestProps;
+            props.setLangManager(languageManager);
             const dataKeyCnt = Object.keys(props.data).length;
             const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
     
             return html`<div class="ff-flex-item-stretch ff-scroll-y">
-            <sv-manifest-level-tree .props=${manifestProps}></sv-manifest-tree>
+            <sv-manifest-level-tree .props=${manifestProps}></sv-manifest-level-tree>
             ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
         </div>`;
         }
