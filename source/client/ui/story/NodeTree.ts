@@ -28,6 +28,7 @@ import NVNode from "../../nodes/NVNode";
 import NVScene from "../../nodes/NVScene";
 import CLight from "@ff/scene/components/CLight";
 import ConfirmDeleteLightMenu from "./ConfirmDeleteLightMenu";
+import ConfirmDeleteModelMenu from "./ConfirmDeleteModelMenu";
 import CreateLightMenu from "./CreateLightMenu";
 import CVScene from "client/components/CVScene";
 import unitScaleFactor from "client/utils/unitScaleFactor";
@@ -98,6 +99,7 @@ class NodeTree extends Tree<NVNode>
         }
         if (node.model) {
             icons.push(html`<ff-icon class="sv-icon-model" name=${node.model.icon}></ff-icon>`);
+            buttons.push(html`<ff-button icon="trash" title="Delete Model" class="sv-delete-model-btn" @click=${(e: MouseEvent) => this.onClickDeleteModel(e, node)}></ff-button>`);
         }
         if (node.name === "Lights") {
             buttons.push(html`<ff-button icon="create" title="Create Light" class="sv-add-light-btn" @click=${(e: MouseEvent) => this.onClickAddLight(e, node)}></ff-button>`);
@@ -230,6 +232,23 @@ class NodeTree extends Tree<NVNode>
         const language: CVLanguageManager = this.documentProvider.activeComponent.setup.language;
 
         ConfirmDeleteLightMenu.show(mainView, language, node.name)
+            .then(confirmed => {
+                if (confirmed) {
+                    if (this.nodeProvider.activeNode === node) {
+                        this.nodeProvider.activeNode = node.transform.parent?.node as NVNode;
+                    }
+                    node.dispose();
+                    this.requestUpdate();
+                }
+            });
+    }
+    protected onClickDeleteModel(event: MouseEvent, node: NVNode) {
+        event.stopPropagation();
+        if (!node.model) return;
+        const mainView = document.getElementsByTagName('voyager-story')[0] as HTMLElement;
+        const language: CVLanguageManager = this.documentProvider.activeComponent.setup.language;
+
+        ConfirmDeleteModelMenu.show(mainView, language, node.name)
             .then(confirmed => {
                 if (confirmed) {
                     if (this.nodeProvider.activeNode === node) {
