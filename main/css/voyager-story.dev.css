@@ -3595,6 +3595,16 @@ ff-tab-header label, ff-dock-panel-header label {
   display: inherit;
 }
 
+.sv-manifest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+.sv-manifest-actions .ff-button.ff-control {
+  border-radius: 6px;
+}
+
 .sv-manifest-prop-menu {
   width: 600px;
   height: 450px;
