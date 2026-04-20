@@ -42,7 +42,7 @@ export function isURL(url: string){
     }
 }
 
-export async function verifyContentType(url: string, match: string): Promise<boolean> {
+export async function verifyContentType(url: string, matches: string[]): Promise<boolean> {
     try {
         const res = await fetch(url);
         
@@ -50,7 +50,7 @@ export async function verifyContentType(url: string, match: string): Promise<boo
 
         const contentType = res.headers.get("Content-Type");
         // Using optional chaining and lowercase for defensive comparison
-        return !!(contentType?.toLowerCase().includes(match.toLowerCase()));
+        return matches.find((match) => contentType?.toLowerCase() === match.toLowerCase()) !== undefined;
     } catch (err) {
         // This catches DNS failures or Proxy timeouts
         console.error("ContentType Verification Failed:", err);

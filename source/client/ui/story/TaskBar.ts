@@ -178,7 +178,7 @@ export default class TaskBar extends SystemView
             switch(assestType){
                 case "model":
                     // Handle model import
-                    verifyContentType(url, "application/octet-stream").then(isValid => {
+                    verifyContentType(url, ["application/octet-stream", "model/gltf-binary"]).then(isValid => {
                         if(isValid){
                             explorer.loadModel(url, "medium");
                         }
@@ -192,7 +192,7 @@ export default class TaskBar extends SystemView
                     break;
                 case "manifest":
                     // Handle manifest import
-                    verifyContentType(url, "text").then(isValid => {
+                    verifyContentType(url, ["text/json", "application/json"]).then(isValid => {
                         if(isValid){
                             explorer.loadDocument(url, undefined, "medium")
                         }
