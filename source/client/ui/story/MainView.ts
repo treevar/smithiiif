@@ -98,7 +98,7 @@ export default class MainView extends CustomElement
 {
     static readonly stateKey: string = "main-view-2";
 
-    protected application: StoryApplication;
+    public application: StoryApplication;
     protected dockView: DockView;
 
     protected registry: DockContentRegistry;

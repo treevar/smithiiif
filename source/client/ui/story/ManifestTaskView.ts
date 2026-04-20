@@ -29,7 +29,7 @@ import { customElement, property, html, TemplateResult } from "@ff/ui/CustomElem
 import Tree from "@ff/ui/Tree";
 
 import { TaskView } from "client/components/CVTask";
-import MainView from "client/ui/explorer/MainView";
+import MainView from "client/ui/story/MainView";
 import NVNode from "client/nodes/NVNode";
 import { IManifestProvider, ManifestNode, ManifestProps, MultilangProp, isManifestProvider } from "client/utils/ManifestProps";
 import ManifestPropMenu from "./ManifestPropMenu";
@@ -57,13 +57,39 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
             manifestProps.createFromObject(obj, false, true);
 
             this.requestUpdate();
-            const tree = this.renderRoot.querySelector('sv-manifest-tree');
+            const tree = this.renderRoot.querySelector('sv-manifest-tree') || this.renderRoot.querySelector('sv-manifest-level-tree');
             if (tree) {
                 (tree as any).requestUpdate();
             }
 
         }).catch(e => {});
     }
+
+    //handles the import of the Manifest json file
+    protected handleImportManifest(manifestProps: ManifestProps) {
+        const input = this.renderRoot.querySelector('#manifest-file-input') as HTMLInputElement;
+        input?.click();
+    }
+
+    //reads the json file 
+    protected onFileSelected(manifestProps: ManifestProps, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    file.text().then(text => {
+        try {
+            const json = JSON.parse(text);
+            manifestProps.importFromIIIFJSON(json);
+            this.requestUpdate();
+            const tree = this.renderRoot.querySelector('sv-manifest-tree');
+            if (tree) (tree as any).requestUpdate();
+        } catch(e) {
+            console.error("ManifestTaskView: Failed to parse manifest JSON", e);
+        }
+        input.value = '';
+    });
+}
 
     protected createAddButton(manifestProps: ManifestProps){
         return html`<ff-button icon="create" class="ff-button ff-control" title="Add Property" @click=${() => {this.handleAddProp(manifestProps)}}></ff-button>`;
@@ -77,6 +103,22 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         //const langSwitch = `<sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>`;
         //TODO: Add translations for this message VVVVV
         const defMsg = html`<div class="sv-placeholder">Please select a node that implements IManifestProvider.</div>`;
+        
+        const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;                
+        const manifestLevel = mainView.application.manifestLevelProps;
+        if(manifestLevel){
+            const manifestProps = mainView.application.manifestProps; 
+            const props = manifestProps;
+            props.setLangManager(languageManager);
+            const dataKeyCnt = Object.keys(props.data).length;
+            const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
+    
+            return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <sv-manifest-level-tree .props=${manifestProps}></sv-manifest-level-tree>
+            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
+        </div>`;
+        }
+        
         if(!this.activeNode) {
             return defMsg;
         }
@@ -97,8 +139,14 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
         
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <input type="file" id="manifest-file-input" accept=".json" style="display:none"
+                @change=${(e: Event) => this.onFileSelected(nodes[0].manifestProps, e)}>
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
-            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
+            <div class="sv-manifest-actions">
+                ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
+                <ff-button icon="document" text="Import" class="ff-button ff-control" title="Import Manifest JSON"
+                    @click=${() => this.handleImportManifest(nodes[0].manifestProps)}></ff-button>
+            </div>
         </div>`;
     }
 }
@@ -171,6 +219,105 @@ export class ManifestTree extends Tree<ITreeNode>
                 property: null,
                 children: this.createPropertyNodes(component.manifestProps),
             })),
+        };
+    }
+
+    protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
+        const data = properties.data;
+
+        // Helper to recursively build the tree from the ManifestNode data
+        const buildTree = (obj: ManifestNode, path: string): ITreeNode[] => {
+            if (typeof obj !== 'object' || obj === null || obj instanceof MultilangProp) {
+                return [];
+            }
+
+            return Object.entries(obj).map(([key, value]) => {
+                const currentPath = path === "" ? key : `${path}.${key}`;
+                const isLeaf = !(typeof value === 'object' && !(value instanceof MultilangProp));
+                
+                return {
+                    id: currentPath,
+                    text: key,
+                    classes: isLeaf ? "ff-property" : "ff-group",
+                    // If it's a leaf, look up the UI Property we registered earlier
+                    property: isLeaf ? properties.getUIProperty(currentPath) : null,
+                    // Recursively build children
+                    children: buildTree(value as ManifestNode, currentPath),
+                    // If this is an array, add a button to add elements
+                    buttons: Array.isArray(value) ? [this.createAddElemButton(currentPath, properties)] : null
+                };
+            });
+        };
+
+        return buildTree(data, "");
+    }
+
+    // Handle adding an element to an array property
+    protected handleAddElem(path: string, props: ManifestProps){
+        if(!path || path.length === 0){
+            console.warn("ManifestTree.handleAddElem(): path is empty");
+            return;
+        }
+        if(!props){
+            console.warn("ManifestTree.handleAddElem(): props is null");
+            return;
+        }
+
+        props.addElemToArray(path);
+        this.requestUpdate();
+    }
+}
+
+
+@customElement("sv-manifest-level-tree")
+export class ManifestLevelTree extends Tree<ITreeNode>
+{
+    @property({ attribute: false })
+    props: ManifestProps = null;
+
+    protected firstConnected()
+    {
+        super.firstConnected();
+        this.classList.add("ff-property-tree", "sv-manifest-tree");
+    }
+
+    protected getClasses(treeNode: ITreeNode)
+    {
+        return treeNode.classes;
+    }
+
+    protected update(changedProperties: Map<PropertyKey, unknown>)
+    {
+        if (changedProperties.has("props") || this.hasUpdated) {
+            this.root = this.createNodeTreeNode(this.props);
+        }
+
+        super.update(changedProperties);
+    }
+
+    protected renderNodeHeader(node: ITreeNode)
+    {
+        if (!node.property) {
+            return html`<div class="ff-text ff-label ff-ellipsis">${node.text}</div>${node.buttons}`;
+        }
+
+        return html`<sv-property-view .property=${node.property}></sv-property-view>`;
+
+    }
+
+    //Helper to create a button for adding elements to array properties
+    protected createAddElemButton(path: string, props: ManifestProps){
+        return html`<ff-button icon="create" class="iiif-add-btn" title="Add Elem" @click=${(e: MouseEvent) => {e.stopPropagation(); this.handleAddElem(path, props)}}></ff-button>`;
+    }
+
+    protected createNodeTreeNode(props: ManifestProps): ITreeNode
+    {
+        //console.log(`${components[0].manifestProps.serialize()}`);
+        return {
+            id: "THISISANIDTHATWILLNOTCONFLICTWITHNODES",
+            text: "Manifest Properties",
+            classes: "ff-node",
+            children: this.createPropertyNodes(props),
         };
     }
 

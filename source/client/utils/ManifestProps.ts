@@ -155,6 +155,7 @@ export class ManifestProps{
         }]
     };
 
+    
     #data: Dictionary<ManifestNode> = {};
     #base: Dictionary<ManifestNode> = {};
     #optionals: Dictionary<ManifestNode> = {};
@@ -174,6 +175,60 @@ export class ManifestProps{
         this.#genArrayDefs();
         //console.log(`araydef: ${JSON.stringify(this.#arrayDefs)}`);
     }
+
+    //import from IIIFJSON Manifest and populates the props
+    //only imports fields that manifestProps supports
+    importFromIIIFJSON(json: any){
+    if(!json || typeof json !== 'object') return;
+    console.log("importFromIIIFJSON received:", json)
+
+    //reads IIIF language map and writes each language first value into prop
+    const loadMultilang = (prop: MultilangProp, iiifLangMap: any) => {
+        if (!iiifLangMap || typeof iiifLangMap !== 'object') return;
+        Object.entries(iiifLangMap).forEach(([lang, vals]) => {
+            const arr = vals as string[];
+            if (arr && arr.length > 0) prop.set(lang as TLanguageType, arr[0]);
+        });
+    };
+
+    //label is always presint in #data
+    if (json.label) {
+        loadMultilang(this.get("label") as MultilangProp, json.label);
+    }
+
+    //resgister if doesnt exist then populate its values
+    if (json.summary) {
+        if (!this.has("summary"))
+            this.createFromObject({ "summary": new MultilangProp() }, false, true);
+        loadMultilang(this.get("summary") as MultilangProp, json.summary);
+    }
+
+    //required statment is optional contains contains its own label and value fields
+    //Registers whole structure first if missing, then populates its feilds
+    if (json.requiredStatement) {
+        if (!this.has("requiredStatement"))
+            this.createFromObject({
+                "requiredStatement": { "label": new MultilangProp(), "value": new MultilangProp() }
+            }, false, true);
+        if (json.requiredStatement.label)
+            loadMultilang(this.get("requiredStatement.label") as MultilangProp, json.requiredStatement.label);
+        if (json.requiredStatement.value)
+            loadMultilang(this.get("requiredStatement.value") as MultilangProp, json.requiredStatement.value);
+    }
+
+    //rights is plaintext string (not multilingual)
+    if (json.rights && typeof json.rights === 'string') {
+        if (!this.has("rights"))
+            this.createFromObject({ "rights": "" }, false, true);
+        this.getUIProperty("rights")?.setValue(json.rights);
+    }
+
+    // push all updates #data values into the UI property objects
+    this.fillPropertyValues();
+    console.log("ManifestProps #data after import: ", this.data)
+}
+
+
     //Get a property by key, return null if not found
     get(key: string): ManifestNode | null {
         return this.#resolvePath(key);
