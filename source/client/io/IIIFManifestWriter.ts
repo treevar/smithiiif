@@ -31,6 +31,7 @@ import documentTemplate from "client/templates/default.svx.json";
 import CVStoryApplication from "client/components/CVStoryApplication";
 import unitScaleFactor from "client/utils/unitScaleFactor";
 import { MultilangProp } from "client/utils/ManifestProps";
+import MainView from "client/ui/story/MainView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,16 +70,26 @@ export default class IIIFManifestWriter {
 
         _color.setRGB(background.ins.color0.value[0],background.ins.color0.value[1],background.ins.color0.value[2]);
 
+        const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;                
+        const manProps = mainView.application.manifestProps;
+
         const jsonObj = {};
         jsonObj["@context"] = "http://iiif.io/api/presentation/4/context.json";
         jsonObj["id"] = "https://example.org/iiif/3d/3d_scene.json";
         jsonObj["type"] = "Manifest";
-        jsonObj["label"] = {};
+        jsonObj["label"] = manProps.get("label") as MultilangProp;
         // add summary if available
         const summary = cvDocument.meta.collection.get("IIIFManifestSummary");
         if(summary !== undefined) {
             jsonObj["summary"] = { "en": [summary] };
+        } else {
+            
         }
+
+        if(manProps.has("requiredStatement")){
+            jsonObj["requiredStatement"] = manProps.get("requiredStatement");
+        }
+        
         jsonObj["items"] = [{}];
 
         // add multilingual title

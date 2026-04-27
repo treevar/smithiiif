@@ -84,8 +84,8 @@ export default class NavigatorPanel extends SystemView
                         const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;
                         mainView.application.manifestLevelProps = !mainView.application.manifestLevelProps;
                         const manifestTV = document.getElementsByTagName('sv-manifest-task-view')[0] as ManifestTaskView;
-                        manifestTV.requestUpdate();
-                    }}></ff-button>` : null} 
+                        manifestTV.requestUpdate()
+                    }}></ff-button>` : null}
                 </div> 
                 <sv-node-tree class="ff-flex-item-stretch" .system=${system}></sv-node-tree>
             </div>`;
