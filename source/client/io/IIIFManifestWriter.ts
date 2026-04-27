@@ -77,18 +77,27 @@ export default class IIIFManifestWriter {
         jsonObj["@context"] = "http://iiif.io/api/presentation/4/context.json";
         jsonObj["id"] = "https://example.org/iiif/3d/3d_scene.json";
         jsonObj["type"] = "Manifest";
-        jsonObj["label"] = manProps.get("label") as MultilangProp;
+        jsonObj["label"] = manProps.get("label") ? manProps.get("label") as MultilangProp : "";
         // add summary if available
         const summary = cvDocument.meta.collection.get("IIIFManifestSummary");
         if(summary !== undefined) {
             jsonObj["summary"] = { "en": [summary] };
-        } else {
-            
+        } else if(manProps.has("summary")){
+            jsonObj["summary"] = manProps.get("summary");
         }
 
         if(manProps.has("requiredStatement")){
             jsonObj["requiredStatement"] = manProps.get("requiredStatement");
         }
+
+        if(manProps.has("rights")){
+            jsonObj["rights"] = manProps.get("rights");
+        }    
+
+        if(manProps.has("metadata")){
+            jsonObj["metadata"] = manProps.get("metadata");
+        }
+
         
         jsonObj["items"] = [{}];
 
