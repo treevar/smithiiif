@@ -546,8 +546,8 @@ export class ManifestProps{
         this.#uiProperties[fullKey] = uiProp;
     }
 
-    updateAllLangTags(){
-        return;
+    /*updateAllLangTags(){
+
         if(!this.#langManager){ return; }
         Object.values(this.#uiProperties).forEach((uiProp) => {
             if(uiProp.path.includes(' [')) { //Is multilang
@@ -558,7 +558,7 @@ export class ManifestProps{
                 }
             }
         });
-    }
+    }*/
 
     //Removes a property from data
     //Assuming key is valid

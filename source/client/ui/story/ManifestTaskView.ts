@@ -209,9 +209,17 @@ export class ManifestTree extends Tree<ITreeNode>
 
     protected createNodeTreeNode(node: Node | ManifestProps): ITreeNode
     {
+        if(!node){
+            return {
+                id: "NULLNODE",
+                text: "NULL NODE",
+                classes: "ff-node",
+                children: [],
+            }
+        }
         //ManifestProps
         if(node instanceof ManifestProps){
-            node.updateAllLangTags();
+            //node.updateAllLangTags();
             //console.log(`${components[0].manifestProps.serialize()}`);
             return {
                 id: "THISISANIDTHATWILLNOTCONFLICTWITHNODES",
