@@ -106,10 +106,29 @@ export default class IIIFManifestWriter {
             jsonObj["label"][ELanguageType[language.id].toLowerCase()] = [cvDocument.titleIn(language.id)];
         }); 
 
+        const sceneProps = cvDocument.root.scene.manifestProps;
+
         const iiifScene = jsonObj["items"][0];
         iiifScene["id"] = "https://example.org/iiif/scene1";
         iiifScene["type"] = "Scene";
-        iiifScene["label"] = { "en": [cvDocument.root.name || "3D Scene"] };
+        iiifScene["label"] = { "en": [sceneProps.get("label") || "3D Scene"] };
+
+        if(sceneProps.has("summary")){
+            iiifScene["summary"] = sceneProps.get("summary");
+        }
+
+        if(sceneProps.has("requiredStatement")){
+            iiifScene["requiredStatement"] = sceneProps.get("requiredStatement");
+        }
+
+        if(sceneProps.has("rights")){
+            iiifScene["rights"] = sceneProps.get("rights");
+        }    
+
+        if(sceneProps.has("metadata")){
+            iiifScene["metadata"] = sceneProps.get("metadata");
+        }
+
         iiifScene["spatialScale"] = {
             "type": "Quantity",
             "quantityValue": unitScaleFactor(cvDocument.root.scene.ins.units.getValidatedValue(), EUnitType.m),
