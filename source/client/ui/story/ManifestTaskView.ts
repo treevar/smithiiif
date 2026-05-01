@@ -56,7 +56,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
             manifestProps.createFromObject(obj, false, true);
 
             this.requestUpdate();
-            const tree = this.renderRoot.querySelector('sv-manifest-tree') || this.renderRoot.querySelector('sv-manifest-level-tree');
+            const tree = this.renderRoot.querySelector('sv-manifest-tree');
             if (tree) {
                 (tree as any).requestUpdate();
             }
@@ -118,7 +118,10 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
             dataKeyCnt = Object.keys(props.data).length;
             allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
     
-            node = props;
+            return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <sv-manifest-tree .node=${manifestProps}></sv-manifest-tree>
+            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
+        </div>`;
         }
         if(!node){
             if(!this.activeNode) {
@@ -170,7 +173,7 @@ interface ITreeNode
 export class ManifestTree extends Tree<ITreeNode>
 {
     @property({ attribute: false })
-    node: NVNode = null;
+    node: NVNode | ManifestProps = null;
 
     protected firstConnected()
     {
@@ -207,8 +210,20 @@ export class ManifestTree extends Tree<ITreeNode>
         return html`<ff-button icon="create" class="iiif-add-btn" title="Add Elem" @click=${(e: MouseEvent) => {e.stopPropagation(); this.handleAddElem(path, props)}}></ff-button>`;
     }
 
-    protected createNodeTreeNode(node: Node): ITreeNode
+    protected createNodeTreeNode(node: Node | ManifestProps): ITreeNode
     {
+        //ManifestProps
+        if(node instanceof ManifestProps){
+            node.updateAllLangTags();
+            //console.log(`${components[0].manifestProps.serialize()}`);
+            return {
+                id: "THISISANIDTHATWILLNOTCONFLICTWITHNODES",
+                text: "Manifest Properties",
+                classes: "ff-node",
+                children: this.createPropertyNodes(node),
+            };
+        }
+        //NVNode
         const components: (Component & IManifestProvider)[] = node.components.getArray().filter(isManifestProvider);
         //console.log(`${components[0].manifestProps.serialize()}`);
         return {
@@ -227,106 +242,6 @@ export class ManifestTree extends Tree<ITreeNode>
 
     protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
         //properties.updateAllLangTags();
-        const data = properties.data;
-
-        // Helper to recursively build the tree from the ManifestNode data
-        const buildTree = (obj: ManifestNode, path: string): ITreeNode[] => {
-            if (typeof obj !== 'object' || obj === null || obj instanceof MultilangProp) {
-                return [];
-            }
-
-            return Object.entries(obj).map(([key, value]) => {
-                const currentPath = path === "" ? key : `${path}.${key}`;
-                const isLeaf = !(typeof value === 'object' && !(value instanceof MultilangProp));
-                
-                return {
-                    id: currentPath,
-                    text: key,
-                    classes: isLeaf ? "ff-property" : "ff-group",
-                    // If it's a leaf, look up the UI Property we registered earlier
-                    property: isLeaf ? properties.getUIProperty(currentPath) : null,
-                    // Recursively build children
-                    children: buildTree(value as ManifestNode, currentPath),
-                    // If this is an array, add a button to add elements
-                    buttons: Array.isArray(value) ? [this.createAddElemButton(currentPath, properties)] : null
-                };
-            });
-        };
-
-        return buildTree(data, "");
-    }
-
-    // Handle adding an element to an array property
-    protected handleAddElem(path: string, props: ManifestProps){
-        if(!path || path.length === 0){
-            console.warn("ManifestTree.handleAddElem(): path is empty");
-            return;
-        }
-        if(!props){
-            console.warn("ManifestTree.handleAddElem(): props is null");
-            return;
-        }
-
-        props.addElemToArray(path);
-        this.requestUpdate();
-    }
-}
-
-
-@customElement("sv-manifest-level-tree")
-export class ManifestLevelTree extends Tree<ITreeNode>
-{
-    @property({ attribute: false })
-    props: ManifestProps = null;
-
-    protected firstConnected()
-    {
-        super.firstConnected();
-        this.classList.add("ff-property-tree", "sv-manifest-tree");
-    }
-
-    protected getClasses(treeNode: ITreeNode)
-    {
-        return treeNode.classes;
-    }
-
-    protected update(changedProperties: Map<PropertyKey, unknown>)
-    {
-        if (changedProperties.has("props") || this.hasUpdated) {
-            this.root = this.createNodeTreeNode(this.props);
-        }
-
-        super.update(changedProperties);
-    }
-
-    protected renderNodeHeader(node: ITreeNode)
-    {
-        if (!node.property) {
-            return html`<div class="ff-text ff-label ff-ellipsis">${node.text}</div>${node.buttons}`;
-        }
-
-        return html`<sv-property-view .property=${node.property}></sv-property-view>`;
-
-    }
-
-    //Helper to create a button for adding elements to array properties
-    protected createAddElemButton(path: string, props: ManifestProps){
-        return html`<ff-button icon="create" class="iiif-add-btn" title="Add Elem" @click=${(e: MouseEvent) => {e.stopPropagation(); this.handleAddElem(path, props)}}></ff-button>`;
-    }
-
-    protected createNodeTreeNode(props: ManifestProps): ITreeNode
-    {
-        //props.updateAllLangTags();
-        //console.log(`${components[0].manifestProps.serialize()}`);
-        return {
-            id: "THISISANIDTHATWILLNOTCONFLICTWITHNODES",
-            text: "Manifest Properties",
-            classes: "ff-node",
-            children: this.createPropertyNodes(props),
-        };
-    }
-
-    protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
         const data = properties.data;
 
         // Helper to recursively build the tree from the ManifestNode data
