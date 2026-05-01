@@ -74,15 +74,18 @@ export default class NavigatorPanel extends SystemView
             </div>
             <ff-splitter direction="vertical"></ff-splitter>` : null;
 
+        const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;
         return html`${documentList}
             <div class="ff-splitter-section ff-flex-column" style="flex-basis: 70%">
                 <div class="sv-panel-header">
                     <ff-icon name="hierarchy"></ff-icon>
                     <div class="ff-text">Nodes</div>
-                    ${manifestSelected ? html`<ff-button icon="comment" text="Manifest Level" title="Manifest-Level-Edits"
+                    ${manifestSelected ? html`<ff-button icon="comment" id="manifest-level-button" text="Manifest Level" title="Manifest-Level-Edits"
                     @click=${() => {
-                        const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;
                         mainView.application.manifestLevelProps = !mainView.application.manifestLevelProps;
+                        const btn = document.getElementById('manifest-level-button');
+                        btn.style.outline = mainView.application.manifestLevelProps ? "2px solid orange" : "none";
+                        //btn.style.outlineColor = mainView.application.manifestLevelProps ? "orange" : "transparent";
                         const manifestTV = document.getElementsByTagName('sv-manifest-task-view')[0] as ManifestTaskView;
                         manifestTV.requestUpdate();
                     }}></ff-button>` : null} 
