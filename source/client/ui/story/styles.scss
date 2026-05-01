@@ -898,3 +898,25 @@ $color-component-meta-light: #d9d998;
     border-color: rgba(common.$color-text, 0.5);
   }
 }
+
+#manifest-level-button {
+  background-color: transparent;
+  color: common.$color-text;
+  padding: 2px 6px;
+  font-size: 0.9em;
+
+  &[selected] {
+    background-color: common.$color-primary;
+    color: common.$color-text-light;
+    border-color: common.$color-primary;
+  }
+
+  &:hover {
+    background: rgba(common.$color-text, 0.1);
+    border-color: rgba(common.$color-text, 0.5);
+  }
+}
+
+#manifest-level-button.is-selected {
+  outline: 2px solid orange;
+}

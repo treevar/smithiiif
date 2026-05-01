@@ -84,7 +84,12 @@ export default class NavigatorPanel extends SystemView
                     @click=${() => {
                         mainView.application.manifestLevelProps = !mainView.application.manifestLevelProps;
                         const btn = document.getElementById('manifest-level-button');
-                        btn.style.outline = mainView.application.manifestLevelProps ? "2px solid orange" : "none";
+                        if(mainView.application.manifestLevelProps){
+                            btn.classList.add("is-selected");
+                        }
+                        else{
+                            btn.classList.remove("is-selected");
+                        }
                         //btn.style.outlineColor = mainView.application.manifestLevelProps ? "orange" : "transparent";
                         const manifestTV = document.getElementsByTagName('sv-manifest-task-view')[0] as ManifestTaskView;
                         manifestTV.requestUpdate();
