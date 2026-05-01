@@ -223,6 +223,7 @@ export class ManifestTree extends Tree<ITreeNode>
     }
 
     protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
+        properties.updateAllLangTags();
         const data = properties.data;
 
         // Helper to recursively build the tree from the ManifestNode data
@@ -312,6 +313,7 @@ export class ManifestLevelTree extends Tree<ITreeNode>
 
     protected createNodeTreeNode(props: ManifestProps): ITreeNode
     {
+        props.updateAllLangTags();
         //console.log(`${components[0].manifestProps.serialize()}`);
         return {
             id: "THISISANIDTHATWILLNOTCONFLICTWITHNODES",

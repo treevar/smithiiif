@@ -276,10 +276,10 @@ export class ManifestProps{
         if(this.langManager && this.langManager.id === langManager.id){ return; } //Lang manager is the same
         //remove old listener if it exists
         if(this.#langManager) {
-            this.#langManager.off("tag-update", this.fillPropertyValues);
+            this.#langManager.off("tag-update", this.updateMultiLangProps, this);
         }
         this.#langManager = langManager;
-        this.#langManager.on("tag-update", this.fillPropertyValues);
+        this.#langManager.on("tag-update", this.updateMultiLangProps, this);
     }
 
     get langManager(): CVLanguageManager {
@@ -302,6 +302,11 @@ export class ManifestProps{
 
     get arrayDefs(): Dictionary<ManifestNode>{
         return this.#arrayDefs;
+    }
+
+    updateMultiLangProps(){
+        this.updateAllLangTags();
+        this.fillPropertyValues();
     }
 
     //Fill UI Properties with the current language's value
@@ -539,6 +544,19 @@ export class ManifestProps{
             this.#onPrimitivePropertyChanged(parent, parentKey, newValue);
         }, this);
         this.#uiProperties[fullKey] = uiProp;
+    }
+
+    updateAllLangTags(){
+        if(!this.#langManager){ return; }
+        Object.values(this.#uiProperties).forEach((uiProp) => {
+            if(uiProp.path.includes(' [')) { //Is multilang
+                const [base, lang] = uiProp.path.split(' [');
+                const curLang = this.#getCurLang();
+                if(!lang.includes(curLang)){ //Update to current lang
+                    uiProp.path = `${base} [${this.#getCurLang()}]`;
+                }
+            }
+        });
     }
 
     //Removes a property from data
