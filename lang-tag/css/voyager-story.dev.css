@@ -3681,4 +3681,24 @@ ff-tab-header label, ff-dock-panel-header label {
   border-color: rgba(200, 200, 200, 0.5);
 }
 
+#manifest-level-button {
+  background-color: transparent;
+  color: #c8c8c8;
+  padding: 2px 6px;
+  font-size: 0.9em;
+}
+#manifest-level-button[selected] {
+  background-color: #0089bf;
+  color: #e8e8e8;
+  border-color: #0089bf;
+}
+#manifest-level-button:hover {
+  background: rgba(200, 200, 200, 0.1);
+  border-color: rgba(200, 200, 200, 0.5);
+}
+
+#manifest-level-button.is-selected {
+  outline: 2px solid orange;
+}
+
 /*# sourceMappingURL=voyager-story.dev.css.map*/
