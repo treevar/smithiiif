@@ -305,7 +305,7 @@ export class ManifestProps{
     }
 
     updateMultiLangProps(){
-        this.updateAllLangTags();
+        //this.updateAllLangTags();
         this.fillPropertyValues();
     }
 
@@ -520,7 +520,7 @@ export class ManifestProps{
 
     #addMultiLangUIProperty(key: string, node: MultilangProp){
         const ident = " [ML]"; //Used for differentiating between normal and multilang props
-        const uiProp = new Property(`${key}${ident}`, schemas.String, true);
+        const uiProp = new Property(`${key} ${ident}`, schemas.String, true);
         const lang = this.#getCurLang();
         const curLangVal = node.get(lang);
         if(curLangVal && curLangVal.length > 0){

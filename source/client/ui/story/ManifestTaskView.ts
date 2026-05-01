@@ -33,7 +33,6 @@ import MainView from "client/ui/story/MainView";
 import NVNode from "client/nodes/NVNode";
 import { IManifestProvider, ManifestNode, ManifestProps, MultilangProp, isManifestProvider } from "client/utils/ManifestProps";
 import ManifestPropMenu from "./ManifestPropMenu";
-import Button from "@ff/ui/Button";
 
 @customElement("sv-manifest-task-view")
 export default class ManifestTaskView extends TaskView<CVManifestTask>
@@ -104,48 +103,52 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
         //TODO: Add translations for this message VVVVV
         const defMsg = html`<div class="sv-placeholder">Please select a node that implements IManifestProvider.</div>`;
         
+        let dataKeyCnt = 0;
+        let allKeyCnt = 0;
+        let node: NVNode | ManifestProps = null;
+        let nodes = [];
+        let props = null;
+
         const mainView = document.getElementsByTagName('voyager-story')[0] as MainView;                
         const manifestLevel = mainView.application.manifestLevelProps;
         if(manifestLevel){
             const manifestProps = mainView.application.manifestProps; 
-            const props = manifestProps;
+            props = manifestProps;
             props.setLangManager(languageManager);
-            const dataKeyCnt = Object.keys(props.data).length;
-            const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
+            dataKeyCnt = Object.keys(props.data).length;
+            allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
     
-            return html`<div class="ff-flex-item-stretch ff-scroll-y">
-            <sv-manifest-level-tree .props=${manifestProps}></sv-manifest-level-tree>
-            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
-        </div>`;
+            node = props;
         }
-        
-        if(!this.activeNode) {
-            return defMsg;
+        if(!node){
+            if(!this.activeNode) {
+                return defMsg;
+            }
+            //Get only nodes with manifest properties
+            const nodes = this.activeNode.components.getArray().filter(isManifestProvider);
+            //console.log(`Nodes size: ${nodes.length}`);
+            node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree
+            //Not a IIIF node
+            if(!node) {
+                return defMsg;
+            }
+            //Make manifest properties aware of language manager
+            nodes.forEach((node) => {
+                node.manifestProps.setLangManager(languageManager);
+            });
+            props = nodes[0].manifestProps;
+            dataKeyCnt = Object.keys(props.data).length;
+            allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
         }
-        //Get only nodes with manifest properties
-        const nodes = this.activeNode.components.getArray().filter(isManifestProvider);
-        //console.log(`Nodes size: ${nodes.length}`);
-        const node = nodes.length > 0 ? this.activeNode : null; //Need to pass the NVNode to the tree
-        //Not a IIIF node
-        if(!node) {
-            return defMsg;
-        }
-        //Make manifest properties aware of language manager
-        nodes.forEach((node) => {
-            node.manifestProps.setLangManager(languageManager);
-        });
-        const props = nodes[0].manifestProps;
-        const dataKeyCnt = Object.keys(props.data).length;
-        const allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
-        
         return html`<div class="ff-flex-item-stretch ff-scroll-y">
+            <sv-property-view .property=${languageManager.ins.activeLanguage}></sv-property-view>
             <input type="file" id="manifest-file-input" accept=".json" style="display:none"
-                @change=${(e: Event) => this.onFileSelected(nodes[0].manifestProps, e)}>
+                @change=${(e: Event) => this.onFileSelected(node || props, e)}>
             <sv-manifest-tree .node=${node}></sv-manifest-tree>
             <div class="sv-manifest-actions">
                 ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
                 <ff-button icon="document" text="Import" class="ff-button ff-control" title="Import Manifest JSON"
-                    @click=${() => this.handleImportManifest(nodes[0].manifestProps)}></ff-button>
+                    @click=${() => this.handleImportManifest(node || props)}></ff-button>
             </div>
         </div>`;
     }
@@ -223,7 +226,7 @@ export class ManifestTree extends Tree<ITreeNode>
     }
 
     protected createPropertyNodes(properties: ManifestProps): ITreeNode[] {
-        properties.updateAllLangTags();
+        //properties.updateAllLangTags();
         const data = properties.data;
 
         // Helper to recursively build the tree from the ManifestNode data
@@ -313,7 +316,7 @@ export class ManifestLevelTree extends Tree<ITreeNode>
 
     protected createNodeTreeNode(props: ManifestProps): ITreeNode
     {
-        props.updateAllLangTags();
+        //props.updateAllLangTags();
         //console.log(`${components[0].manifestProps.serialize()}`);
         return {
             id: "THISISANIDTHATWILLNOTCONFLICTWITHNODES",
