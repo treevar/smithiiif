@@ -118,10 +118,7 @@ export default class ManifestTaskView extends TaskView<CVManifestTask>
             dataKeyCnt = Object.keys(props.data).length;
             allKeyCnt = Object.keys(props.base).length + Object.keys(props.optionals).length;
     
-            return html`<div class="ff-flex-item-stretch ff-scroll-y">
-            <sv-manifest-tree .node=${manifestProps}></sv-manifest-tree>
-            ${dataKeyCnt < allKeyCnt ? this.createAddButton(props) : null}
-        </div>`;
+            node = props;
         }
         if(!node){
             if(!this.activeNode) {

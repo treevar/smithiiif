@@ -547,6 +547,7 @@ export class ManifestProps{
     }
 
     updateAllLangTags(){
+        return;
         if(!this.#langManager){ return; }
         Object.values(this.#uiProperties).forEach((uiProp) => {
             if(uiProp.path.includes(' [')) { //Is multilang
